@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:internhub/screens/verification.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -9,11 +11,67 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   bool loginFocus = true;
   int userType = 0;
+
+  Future<String> _login(String email, String password) async {
+    try {
+      final response = await Supabase.instance.client.auth.signInWithPassword(
+        email: email,
+        password: password,
+      );
+
+      if (response.user == null) {
+        return ("Sign-up failed. Please try again");
+      }
+
+      return ('Successfully signed in as $email');
+    } on AuthException catch (e) {
+      return e.message;
+    }
+  }
+
+  Future<String> _signUp(String email, String password, int userType) async {
+    try {
+      final response = await Supabase.instance.client.auth.signUp(
+        email: email,
+        password: password,
+      );
+
+      if (response.user == null) {
+        return ("Sign-up failed. Please try again.");
+      }
+
+      String role = userType == 0
+          ? 'student'
+          : userType == 1
+          ? 'company'
+          : 'admin';
+
+      if (response.user != null) {
+        final userInsert = await Supabase.instance.client
+            .from('user')
+            .insert({'authId': response.user!.id, 'role': role})
+            .select()
+            .single();
+
+        await Supabase.instance.client.from(role).insert({
+          'userId': userInsert['userId'],
+        });
+      }
+      return "You're almost there! We sent a verification link to your email. Please confirm to continue using InternHub.";
+    } on AuthException catch (e) {
+      return e.message;
+    } catch (e) {
+      return ("Unexpected error: $e");
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     final orange = Color(0xffF5761A);
+    final isWide = screenWidth > 600;
+
     return Scaffold(
       appBar: PreferredSize(
         preferredSize: Size.fromHeight(screenHeight * 0.07),
@@ -81,46 +139,46 @@ class _LoginPageState extends State<LoginPage> {
         ),
       ),
       body: Container(
-        margin: EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
+        margin: isWide
+            ? EdgeInsets.symmetric(horizontal: screenWidth * 0.3)
+            : EdgeInsets.symmetric(horizontal: screenWidth * 0.1),
 
         child: Stack(
           children: [
             Align(
               alignment: Alignment.center,
-              child: loginFocus
-                  ? SingleChildScrollView(
-                      child: _loginCard(
-                        screenWidth,
-                        screenHeight,
-                        _formKey,
-                        orange,
-                      ),
-                    )
-                  : SingleChildScrollView(
-                      child: _loginCard(
-                        screenWidth,
-                        screenHeight,
-                        _formKey,
-                        orange,
-                      ),
-                    ), //SingleChildScrollView(child: _CreateCard(screenWidth, screenHeight))
-            ),
-            Positioned(
-              left: 0,
-              right: 0,
-              top: screenHeight / 5,
-              child: _UserTypeSelector(
-                screenWidth: screenWidth,
-                screenHeight: screenHeight,
-                orange: orange,
-                userType: userType,
-                onSelect: (val) {
-                  setState(() {
-                    userType = val;
-                  });
-                },
+              child: SingleChildScrollView(
+                child: _loginCard(
+                  context,
+                  screenWidth,
+                  screenHeight,
+                  userType,
+                  _formKey,
+                  orange,
+                  loginFocus,
+                  _login,
+                  _signUp,
+                  setState,
+                ),
               ),
             ),
+            if (!loginFocus)
+              Positioned(
+                left: 0,
+                right: 0,
+                top: screenHeight / 6,
+                child: _userTypeSelector(
+                  screenWidth: screenWidth,
+                  screenHeight: screenHeight,
+                  orange: orange,
+                  userType: userType,
+                  onSelect: (val) {
+                    setState(() {
+                      userType = val;
+                    });
+                  },
+                ),
+              ),
           ],
         ),
       ),
@@ -128,7 +186,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 }
 
-Widget _UserTypeSelector({
+Widget _userTypeSelector({
   required double screenWidth,
   required double screenHeight,
   required Color orange,
@@ -249,16 +307,35 @@ OutlineInputBorder _errorBorder() {
   );
 }
 
-Widget _loginCard(double screenWidth, double screenHeight, _formKey, orange) {
+Widget _loginCard(
+  BuildContext context,
+  double screenWidth,
+  double screenHeight,
+  int userType,
+  formKey,
+  orange,
+  bool loginFocus,
+  Future<String> Function(String, String) onLogin,
+  Future<String> Function(String, String, int) onSignUp,
+  void Function(void Function()) setParentState,
+) {
+  final TextEditingController emailController = TextEditingController();
+  final TextEditingController passwordController = TextEditingController();
+
   return Column(
     children: [
-      Text(
-        'LOGIN',
-        style: TextStyle(fontFamily: 'InterExtraBold', fontSize: 48),
-      ),
+      loginFocus
+          ? Text(
+              'LOGIN',
+              style: TextStyle(fontFamily: 'InterExtraBold', fontSize: 48),
+            )
+          : Text(
+              'SIGN UP',
+              style: TextStyle(fontFamily: 'InterExtraBold', fontSize: 48),
+            ),
       SizedBox(height: screenHeight * 0.005),
       Form(
-        key: _formKey,
+        key: formKey,
         child: Column(
           spacing: screenHeight / 30,
           children: [
@@ -274,6 +351,7 @@ Widget _loginCard(double screenWidth, double screenHeight, _formKey, orange) {
                 ],
               ),
               child: TextFormField(
+                controller: emailController,
                 cursorColor: Colors.black,
                 decoration: InputDecoration(
                   filled: true,
@@ -304,6 +382,7 @@ Widget _loginCard(double screenWidth, double screenHeight, _formKey, orange) {
                 ],
               ),
               child: TextFormField(
+                controller: passwordController,
                 cursorColor: Colors.black,
                 obscureText: true,
                 decoration: InputDecoration(
@@ -340,16 +419,68 @@ Widget _loginCard(double screenWidth, double screenHeight, _formKey, orange) {
               ),
               width: double.infinity,
               child: TextButton(
-                onPressed: () {},
-                child: Text(
-                  'LOGIN',
-                  style: TextStyle(
-                    fontFamily: 'InterExtraBold',
-                    fontSize: 18,
-                    color: Colors.black,
-                  ),
-                ),
+                onPressed: () async {
+                  final email = emailController.text.trim();
+                  final password = passwordController.text.trim();
+
+                  if (email.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Email can't be empty")),
+                    );
+                    return;
+                  } else if (password.isEmpty) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text("Password can't be empty")),
+                    );
+                    return;
+                  }
+
+                  if (loginFocus) {
+                    final result = await onLogin(email, password);
+
+                    setParentState(() {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(result)));
+                    });
+                  } else {
+                    final result = await onSignUp(email, password, userType);
+
+                    setParentState(() {
+                      ScaffoldMessenger.of(
+                        context,
+                      ).showSnackBar(SnackBar(content: Text(result)));
+                    });
+                  }
+                },
+                child: loginFocus
+                    ? Text(
+                        'LOGIN',
+                        style: TextStyle(
+                          fontFamily: 'InterExtraBold',
+                          fontSize: 18,
+                          color: Colors.black,
+                        ),
+                      )
+                    : Text(
+                        'SIGN UP',
+                        style: TextStyle(
+                          fontFamily: 'InterExtraBold',
+                          fontSize: 18,
+                          color: Colors.black,
+                        ),
+                      ),
               ),
+            ),
+            Row(
+              children: [
+                Expanded(child: Divider(thickness: 1, color: Colors.grey)),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 10),
+                  child: Text("or", style: TextStyle(color: Colors.grey)),
+                ),
+                Expanded(child: Divider(thickness: 1, color: Colors.grey)),
+              ],
             ),
           ],
         ),
@@ -357,3 +488,6 @@ Widget _loginCard(double screenWidth, double screenHeight, _formKey, orange) {
     ],
   );
 }
+
+
+//TODO: implement verification page, 
