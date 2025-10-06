@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:internhub/screens/verification.dart';
 
 class LoginPage extends StatefulWidget {
   @override
@@ -40,25 +39,39 @@ class _LoginPageState extends State<LoginPage> {
         return ("Sign-up failed. Please try again.");
       }
 
+      final isExisting = await Supabase.instance.client
+          .from('users')
+          .select('email')
+          .eq('email', email);
+      
+      if (isExisting.isNotEmpty) {
+        return "This email already has an account registered to it. Try again.";
+      }
+
       String role = userType == 0
-          ? 'student'
+          ? 'students'
           : userType == 1
           ? 'company'
           : 'admin';
 
       if (response.user != null) {
         final userInsert = await Supabase.instance.client
-            .from('user')
-            .insert({'authId': response.user!.id, 'role': role})
+            .from('users')
+            .insert({
+              'auth_id': response.user!.id,
+              'role': role,
+              'email': email,
+            })
             .select()
             .single();
 
         await Supabase.instance.client.from(role).insert({
-          'userId': userInsert['userId'],
+          'user_id': userInsert['user_id'],
         });
       }
       return "You're almost there! We sent a verification link to your email. Please confirm to continue using InternHub.";
     } on AuthException catch (e) {
+      print(e.message);
       return e.message;
     } catch (e) {
       return ("Unexpected error: $e");
@@ -488,6 +501,3 @@ Widget _loginCard(
     ],
   );
 }
-
-
-//TODO: implement verification page, 
