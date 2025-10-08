@@ -1,5 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:internhub/screens/studentMain.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+
+class LoginResult {
+  final bool success;
+  final String message;
+  LoginResult(this.success, this.message);
+}
 
 class LoginPage extends StatefulWidget {
   @override
@@ -11,7 +18,7 @@ class _LoginPageState extends State<LoginPage> {
   bool loginFocus = true;
   int userType = 0;
 
-  Future<String> _login(String email, String password) async {
+  Future<LoginResult> _login(String email, String password) async {
     try {
       final response = await Supabase.instance.client.auth.signInWithPassword(
         email: email,
@@ -19,12 +26,12 @@ class _LoginPageState extends State<LoginPage> {
       );
 
       if (response.user == null) {
-        return ("Sign-up failed. Please try again");
+        return LoginResult(false, "Sign-up failed. Please try again");
       }
 
-      return ('Successfully signed in as $email');
+      return LoginResult(true, 'Successfully signed in as $email');
     } on AuthException catch (e) {
-      return e.message;
+      return LoginResult(false, e.message);
     }
   }
 
@@ -43,7 +50,7 @@ class _LoginPageState extends State<LoginPage> {
           .from('users')
           .select('email')
           .eq('email', email);
-      
+
       if (isExisting.isNotEmpty) {
         return "This email already has an account registered to it. Try again.";
       }
@@ -313,13 +320,6 @@ OutlineInputBorder _inputBorder() {
   );
 }
 
-OutlineInputBorder _errorBorder() {
-  return OutlineInputBorder(
-    borderSide: BorderSide(color: Colors.red),
-    borderRadius: BorderRadius.circular(12.5),
-  );
-}
-
 Widget _loginCard(
   BuildContext context,
   double screenWidth,
@@ -328,7 +328,7 @@ Widget _loginCard(
   formKey,
   orange,
   bool loginFocus,
-  Future<String> Function(String, String) onLogin,
+  Future<LoginResult> Function(String, String) onLogin,
   Future<String> Function(String, String, int) onSignUp,
   void Function(void Function()) setParentState,
 ) {
@@ -374,8 +374,8 @@ Widget _loginCard(
                   border: _inputBorder(),
                   enabledBorder: _inputBorder(),
                   focusedBorder: _inputBorder(),
-                  errorBorder: _errorBorder(),
-                  focusedErrorBorder: _errorBorder(),
+                  errorBorder: _inputBorder(),
+                  focusedErrorBorder: _inputBorder(),
                   contentPadding: EdgeInsets.symmetric(
                     vertical: 20,
                     horizontal: 10,
@@ -406,8 +406,8 @@ Widget _loginCard(
                   border: _inputBorder(),
                   enabledBorder: _inputBorder(),
                   focusedBorder: _inputBorder(),
-                  errorBorder: _errorBorder(),
-                  focusedErrorBorder: _errorBorder(),
+                  errorBorder: _inputBorder(),
+                  focusedErrorBorder: _inputBorder(),
                   contentPadding: EdgeInsets.symmetric(
                     vertical: 20,
                     horizontal: 10,
@@ -433,36 +433,77 @@ Widget _loginCard(
               width: double.infinity,
               child: TextButton(
                 onPressed: () async {
-                  final email = emailController.text.trim();
+                  final email = emailController.text.trim().toLowerCase();
                   final password = passwordController.text.trim();
 
                   if (email.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Email can't be empty")),
+                      SnackBar(
+                        content: Text("Email can't be empty"),
+                        duration: Duration(seconds: 1),
+                      ),
                     );
                     return;
                   } else if (password.isEmpty) {
                     ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(content: Text("Password can't be empty")),
+                      SnackBar(
+                        content: Text("Password can't be empty"),
+                        duration: Duration(seconds: 1),
+                      ),
                     );
                     return;
                   }
 
                   if (loginFocus) {
+                    showDialog(
+                      context: context,
+                      barrierDismissible: false,
+                      builder: (_) => Center(
+                        child: CircularProgressIndicator(color: orange),
+                      ),
+                    );
+
                     final result = await onLogin(email, password);
 
+                    Navigator.of(context).pop();
+
                     setParentState(() {
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(result)));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(result.message),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
                     });
+
+                    if (!result.success) return;
+
+                    final type = await Supabase.instance.client
+                        .from('users')
+                        .select('role')
+                        .eq('email', email)
+                        .single();
+                    if (type['role'] == 'students') {
+                      print('hi');
+                      Navigator.pushReplacement(
+                        context,
+                        PageRouteBuilder(
+                          pageBuilder: (_, __, ___) => StudentMainPage(),
+                          transitionDuration: Duration.zero,
+                        ),
+                      );
+                    } else if (type['role'] == 'company') {
+                    } else {}
                   } else {
                     final result = await onSignUp(email, password, userType);
 
                     setParentState(() {
-                      ScaffoldMessenger.of(
-                        context,
-                      ).showSnackBar(SnackBar(content: Text(result)));
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(result),
+                          duration: Duration(seconds: 1),
+                        ),
+                      );
                     });
                   }
                 },
