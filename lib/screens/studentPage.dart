@@ -12,7 +12,7 @@ class _StudentPageState extends State<StudentPage> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      child: Text('hi'),
+      child: Text('hello'),
     );
   }
 }

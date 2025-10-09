@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:internhub/screens/firstTimeCompany.dart';
 import 'package:internhub/screens/firstTimeStudent.dart';
+import 'package:internhub/screens/studentPage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:internhub/internetHelper.dart';
 
@@ -88,6 +90,27 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
+  Future<Map<String, dynamic>?> getStudentProfile() async {
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user == null) {
+      return null;
+    }
+
+    final usersResponse = await Supabase.instance.client
+        .from('users')
+        .select('user_id')
+        .eq('auth_id', user.id)
+        .maybeSingle();
+
+    final response = await Supabase.instance.client
+        .from('students')
+        .select('name')
+        .eq('user_id', usersResponse!['user_id'])
+        .maybeSingle();
+
+    return response;
+  }
+
   @override
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
@@ -108,8 +131,6 @@ class _LoginPageState extends State<LoginPage> {
               top: screenHeight * 0.02,
             ),
             child: AppBar(
-              surfaceTintColor: Colors.transparent,
-              elevation: 0,
               leading: Image.asset(
                 'assets/logo-no-text.png',
                 height: 20,
@@ -191,6 +212,7 @@ class _LoginPageState extends State<LoginPage> {
                     _login,
                     _signUp,
                     setState,
+                    getStudentProfile,
                   ),
                 ],
               ),
@@ -334,6 +356,7 @@ Widget _loginCard(
   Future<LoginResult> Function(String, String) onLogin,
   Future<String> Function(String, String, int) onSignUp,
   void Function(void Function()) setParentState,
+  Future<Map<String, dynamic>?> Function() getStudentProfile,
 ) {
   return Container(
     child: Column(
@@ -494,14 +517,52 @@ Widget _loginCard(
                           .eq('email', email)
                           .single();
                       if (type['role'] == 'students') {
-                        Navigator.pushReplacement(
-                          context,
-                          PageRouteBuilder(
-                            pageBuilder: (_, __, ___) => FirstTimeStudentPage(),
-                            transitionDuration: Duration.zero,
-                          ),
-                        );
+                        final profile = await getStudentProfile();
+
+                        if (profile == null) {
+                          Navigator.pushReplacement(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder: (_, __, ___) =>
+                                  FirstTimeStudentPage(),
+                              transitionDuration: Duration.zero,
+                            ),
+                          );
+                        } else {
+                          Navigator.pushReplacement(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder: (_, __, ___) => StudentPage(),
+                              transitionDuration: Duration.zero,
+                            ),
+                          );
+                        }
                       } else if (type['role'] == 'company') {
+                        final type = await Supabase.instance.client
+                            .from('users')
+                            .select('role')
+                            .eq('email', email)
+                            .single();
+                        final profile = await getStudentProfile();
+
+                        if (profile == null) {
+                          Navigator.pushReplacement(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder: (_, __, ___) =>
+                                  FirstTimeCompanyPage(),
+                              transitionDuration: Duration.zero,
+                            ),
+                          );
+                        } else {
+                          Navigator.pushReplacement(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder: (_, __, ___) => StudentPage(),
+                              transitionDuration: Duration.zero,
+                            ),
+                          );
+                        }
                       } else {}
                     } else {
                       final result = await onSignUp(email, password, userType);

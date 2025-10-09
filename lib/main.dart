@@ -28,10 +28,14 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'InternHub',
-      home: SplashPage(), 
+      home: SplashPage(),
       theme: ThemeData(
         scaffoldBackgroundColor: Colors.white,
-        appBarTheme: AppBarTheme(backgroundColor: Colors.white),
+        appBarTheme: AppBarTheme(
+          backgroundColor: Colors.white,
+          surfaceTintColor: Colors.white,
+          elevation: 0,
+        ),
         snackBarTheme: SnackBarThemeData(
           backgroundColor: Color(0xffF5761A),
           contentTextStyle: TextStyle(color: Colors.black),

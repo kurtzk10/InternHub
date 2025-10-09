@@ -3,7 +3,7 @@ import 'package:internhub/screens/studentPage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:internhub/internetHelper.dart';
 
-enum Step { name, uni, resume, profile }
+enum Step { name, uni, resume, finished }
 
 class FirstTimeStudentPage extends StatefulWidget {
   @override
@@ -85,6 +85,16 @@ class _FirstTimeStudentPageState extends State<FirstTimeStudentPage> {
                         setState(() {
                           step = value;
                         });
+
+                        if (value == Step.finished) {
+                          Navigator.pushReplacement(
+                            context,
+                            PageRouteBuilder(
+                              pageBuilder: (_, __, ___) => StudentPage(),
+                              transitionDuration: Duration.zero
+                            ),
+                          );
+                        }
                       },
                     ),
                   ),
@@ -210,17 +220,7 @@ Widget _firstTime(
                       urlController,
                       onStepChange,
                     )
-                  : _nameForm(
-                      context,
-                      screenWidth,
-                      screenHeight,
-                      formKey,
-                      orange,
-                      isWide,
-                      firstController,
-                      lastController,
-                      onStepChange,
-                    ),
+                  : Container(),
             ],
           )
         : Column(
@@ -795,11 +795,11 @@ Widget _uniForm(
                             final yr = yearController.text;
                             final course = courseController.text;
 
-                            int year = yr == '1'
+                            int year = yr == '1st Year'
                                 ? 1
-                                : yr == '2'
+                                : yr == '2nd Year'
                                 ? 2
-                                : yr == '3'
+                                : yr == '3rd Year'
                                 ? 3
                                 : 4;
 
@@ -981,11 +981,11 @@ Widget _uniForm(
                             final yr = yearController.text;
                             final course = courseController.text;
 
-                            int year = yr == '1'
+                            int year = yr == '1st Year'
                                 ? 1
-                                : yr == '2'
+                                : yr == '2nd Year'
                                 ? 2
-                                : yr == '3'
+                                : yr == '3rd Year'
                                 ? 3
                                 : 4;
 
@@ -1184,10 +1184,10 @@ Widget _resumeForm(
                                 .update({'resume_url': resume})
                                 .eq('user_id', userId);
 
-                            onStepChange(Step.profile);
+                            onStepChange(Step.finished);
                           },
                           child: Text(
-                            'Next',
+                            'Finish',
                             style: TextStyle(
                               fontFamily: 'Inter',
                               color: Colors.black,
@@ -1336,10 +1336,10 @@ Widget _resumeForm(
                                 .update({'resume_url': resume})
                                 .eq('user_id', userId);
 
-                            onStepChange(Step.profile);
+                            onStepChange(Step.finished);
                           },
                           child: Text(
-                            'Next',
+                            'Finish',
                             style: TextStyle(
                               fontFamily: 'Inter',
                               color: Colors.black,
@@ -1356,5 +1356,3 @@ Widget _resumeForm(
           ),
         );
 }
-
-//FIX YEAR LEVEL SAVING DIFFERENT VALUE
