@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:internhub/screens/studentPage.dart';
+import 'package:internhub/screens/companyPage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:internhub/internetHelper.dart';
 import 'package:flutter/services.dart';
@@ -129,7 +129,7 @@ class _FirstTimeCompanyPageState extends State<FirstTimeCompanyPage> {
                           Navigator.pushReplacement(
                             context,
                             PageRouteBuilder(
-                              pageBuilder: (_, __, ___) => StudentPage(),
+                              pageBuilder: (_, __, ___) => CompanyPage(),
                               transitionDuration: Duration.zero,
                             ),
                           );

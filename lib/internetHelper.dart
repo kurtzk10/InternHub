@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:internhub/checkInternet.dart';
-
-import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'checkInternet.dart'; // Make sure this contains InternetProvider & InternetStatus
 
 class InternetHelper {
   static DateTime? _lastDialogShown;
@@ -42,7 +39,7 @@ class InternetHelper {
               style: TextStyle(fontFamily: 'Inter'),
             ),
             content: const Text(
-              'InternHub needs an internet connection to help you stay connected with future employers.',
+              'InternHub needs an internet connection to function.',
             ),
             actions: [
               TextButton(

@@ -1128,7 +1128,7 @@ Widget _resumeForm(
                         height: screenHeight / 10,
                         child: TextButton(
                           onPressed: () async {
-                            final resume = urlController.text.trim();
+                            final resume = urlController.text.trim().toLowerCase();
 
                             if (resume.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(

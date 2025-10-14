@@ -44,6 +44,13 @@ class MyApp extends StatelessWidget {
           selectionColor: Color(0xfff5761a),
           selectionHandleColor: Color(0xfff5761a),
         ),
+        dropdownMenuTheme: DropdownMenuThemeData(
+          menuStyle: MenuStyle(
+            backgroundColor: WidgetStateProperty.resolveWith((states) {
+              return Colors.white;
+            }),
+          ),
+        ),
       ),
       debugShowCheckedModeBanner: false,
     );
