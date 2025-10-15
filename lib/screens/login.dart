@@ -105,13 +105,18 @@ class _LoginPageState extends State<LoginPage> {
         .eq('auth_id', user.id)
         .maybeSingle();
 
-    final response = await Supabase.instance.client
+    Map<String, dynamic>? response = await Supabase.instance.client
         .from(role)
-        .select('name')
+        .select()
         .eq('user_id', usersResponse!['user_id'])
-        .maybeSingle();
+        .single();
 
-    if (response == null || response['name'] == null) return null;
+    for (final entry in response.entries) {
+      final value = entry.value;
+      if (value == null || value.toString().isEmpty) {
+        return null;
+      }
+    }
 
     return response;
   }
@@ -149,12 +154,16 @@ class _LoginPageState extends State<LoginPage> {
                     style: TextButton.styleFrom(
                       overlayColor: WidgetStateColor.transparent,
                       foregroundColor: Colors.black,
+                      disabledForegroundColor: Colors.black,
                     ),
-                    onPressed: () => setState(() {
-                      loginFocus = true;
-                      emailController.text = '';
-                      passwordController.text = '';
-                    }),
+                    onPressed: loginFocus
+                        ? null
+                        : () => setState(() {
+                            loginFocus = true;
+                            isVisible = false;
+                            emailController.text = '';
+                            passwordController.text = '';
+                          }),
                     child: Text(
                       'LOGIN',
                       style: TextStyle(
@@ -169,12 +178,16 @@ class _LoginPageState extends State<LoginPage> {
                     style: TextButton.styleFrom(
                       overlayColor: WidgetStateColor.transparent,
                       foregroundColor: Colors.black,
+                      disabledForegroundColor: Colors.black,
                     ),
-                    onPressed: () => setState(() {
-                      loginFocus = false;
-                      emailController.text = '';
-                      passwordController.text = '';
-                    }),
+                    onPressed: loginFocus
+                        ? () => setState(() {
+                            loginFocus = false;
+                            isVisible = false;
+                            emailController.text = '';
+                            passwordController.text = '';
+                          })
+                        : null,
                     child: Text(
                       'SIGN UP',
                       style: TextStyle(
@@ -459,7 +472,9 @@ Widget _loginCard(
                       splashColor: Colors.transparent,
                       highlightColor: Colors.transparent,
                       onPressed: passwordChange,
-                      icon: isVisible ? Icon(Icons.visibility_off) : Icon(Icons.visibility),
+                      icon: isVisible
+                          ? Icon(Icons.visibility_off)
+                          : Icon(Icons.visibility),
                     ),
                     border: _inputBorder(),
                     enabledBorder: _inputBorder(),
@@ -492,6 +507,7 @@ Widget _loginCard(
                 child: TextButton(
                   onPressed: () async {
                     FocusScope.of(context).unfocus();
+                    isVisible = false;
 
                     final email = emailController.text.trim().toLowerCase();
                     final password = passwordController.text.trim();
@@ -569,8 +585,7 @@ Widget _loginCard(
                         }
                       } else if (type['role'] == 'company') {
                         final profile = await getProfile('company');
-
-                        if (profile!['name'] == null) {
+                        if (profile == null) {
                           Navigator.pushReplacement(
                             context,
                             PageRouteBuilder(
@@ -612,7 +627,17 @@ Widget _loginCard(
                         }
                       }
                     } else {
+                      showDialog(
+                        context: context,
+                        barrierDismissible: false,
+                        builder: (_) => Center(
+                          child: CircularProgressIndicator(color: orange),
+                        ),
+                      );
+
                       final result = await onSignUp(email, password, userType);
+
+                      Navigator.of(context).pop();
 
                       setParentState(() {
                         ScaffoldMessenger.of(context).showSnackBar(

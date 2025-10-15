@@ -31,7 +31,7 @@ class _ManageCompanyPageState extends State<ManageCompanyPage> {
     Map<String, dynamic> company,
     String name,
     String industry,
-    bool isVerified,
+    bool isVerified, 
   ) {
     final index = _results.indexWhere(
       (e) => e['company_id'] == company['company_id'],
@@ -42,6 +42,48 @@ class _ManageCompanyPageState extends State<ManageCompanyPage> {
         _results[index]['industry'] = industry;
         _results[index]['is_verified'] = isVerified;
       });
+    }
+  }
+
+  Future<void> deleteCompany(Map<String, dynamic> company) async {
+    final url = Uri.parse(
+      'https://mgmvynmmdqbnzlandlmr.supabase.co/functions/v1/delete_student',
+    );
+    final authId = company['users']['auth_id'];
+    final companyId = company['company_id'];
+    setState(() => _results.remove(company));
+
+    final serviceRoleKey =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nbXZ5bm1tZHFibnpsYW5kbG1yIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc3MDM1MSwiZXhwIjoyMDc1MzQ2MzUxfQ.-AXDwz7s1PApG5zlComqe6QnDBNvu2TEbwqN_Ez-e9U';
+    final response = await http.post(
+      url,
+      body: jsonEncode({'student_id': companyId, 'auth_id': authId}),
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $serviceRoleKey',
+      },
+    );
+
+    if (response.statusCode != 200) {
+      setState(() => _results.add(company));
+      try {
+        final data = jsonDecode(response.body);
+        print('Delete error: $data');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed: ${data['error'] ?? 'Unknown'}')),
+        );
+      } catch (e) {
+        print('Delete error: ${response.body}');
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed: ${response.body}')));
+      }
+    } else {
+      final data = jsonDecode(response.body);
+      print('Delete success: $data');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Company deleted')));
     }
   }
 
@@ -134,19 +176,25 @@ class _ManageCompanyPageState extends State<ManageCompanyPage> {
                       ),
                     )
                   : Column(
-                      children: _results.map((company) {
-                        return Padding(
-                          padding: EdgeInsets.symmetric(vertical: 6),
-                          child: CompanyCard(
-                            company: company,
-                            orange: orange,
-                            isWide: isWide,
+                      children: _results
+                          .where(
+                            (company) =>
+                                !company.values.any((value) => value == null),
+                          )
+                          .map((company) {
+                            return Padding(
+                              padding: EdgeInsets.symmetric(vertical: 6),
+                              child: CompanyCard(
+                                company: company,
+                                orange: orange,
+                                isWide: isWide,
 
-                            onDone: updateCompanyInList,
-                            // onDelete: deleteCompany,
-                          ),
-                        );
-                      }).toList(),
+                                onDone: updateCompanyInList,
+                                onDelete: deleteCompany,
+                              ),
+                            );
+                          })
+                          .toList(),
                     ),
             ],
           ),
@@ -161,14 +209,14 @@ class CompanyCard extends StatefulWidget {
   final Color orange;
   final bool isWide;
   final void Function(Map<String, dynamic>, String, String, bool) onDone;
-  // final void Function(Map<String, dynamic>) onDelete;
+  final void Function(Map<String, dynamic>) onDelete;
 
   const CompanyCard({
     required this.company,
     required this.orange,
     required this.isWide,
     required this.onDone,
-    // required this.onDelete,
+    required this.onDelete,
     super.key,
   });
 
@@ -322,7 +370,7 @@ class _CompanyCardPageState extends State<CompanyCard> {
                             backgroundColor: Colors.red,
                             foregroundColor: Colors.white,
                           ),
-                          onPressed: () {},
+                          onPressed: () => widget.onDelete(widget.company),
                           child: Text('Delete'),
                         )
                       : ElevatedButton(

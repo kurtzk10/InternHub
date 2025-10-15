@@ -242,18 +242,24 @@ class _ManageUserPageState extends State<ManageUserPage> {
                       ),
                     )
                   : Column(
-                      children: _results.map((student) {
-                        return Padding(
-                          padding: EdgeInsets.symmetric(vertical: 6),
-                          child: StudentCard(
-                            student: student,
-                            orange: orange,
-                            isWide: isWide,
-                            onDone: updateStudentInList,
-                            onDelete: deleteStudent,
-                          ),
-                        );
-                      }).toList(),
+                      children: _results
+                          .where(
+                            (student) =>
+                                !student.values.any((value) => value == null),
+                          )
+                          .map((student) {
+                            return Padding(
+                              padding: EdgeInsets.symmetric(vertical: 6),
+                              child: StudentCard(
+                                student: student,
+                                orange: orange,
+                                isWide: isWide,
+                                onDone: updateStudentInList,
+                                onDelete: deleteStudent,
+                              ),
+                            );
+                          })
+                          .toList(),
                     ),
             ],
           ),
@@ -432,7 +438,9 @@ class _StudentCardState extends State<StudentCard> {
                               updatedYear,
                             );
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Student record updated.')),
+                              SnackBar(
+                                content: Text('Student record updated.'),
+                              ),
                             );
 
                             setState(() => isEditing = false);

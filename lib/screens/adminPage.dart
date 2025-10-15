@@ -66,8 +66,6 @@ class _AdminPageState extends State<AdminPage> {
     super.initState();
     firstTime = widget.isFirstTime;
 
-    String? originalName;
-
     final user = Supabase.instance.client.auth.currentUser;
     final userEmail = user?.email;
 
@@ -162,7 +160,8 @@ class _AdminPageState extends State<AdminPage> {
                             orange,
                             isWide,
                             _nameController,
-                            () => setState(() {
+                            (name) => setState(() {
+                              _newNameController.text = name;
                               firstTime = false;
                             }),
                           ),
@@ -272,7 +271,7 @@ Widget _firstTime(
   orange,
   bool isWide,
   nameController,
-  VoidCallback changeFirstTime,
+  void Function(dynamic) changeName,
 ) {
   return Container(
     width: double.infinity,
@@ -441,7 +440,10 @@ Widget _firstTime(
                                     .update({'name': name})
                                     .eq('user_id', userId);
 
-                                changeFirstTime();
+                                changeName(name);
+                                await Future.delayed(
+                                  Duration(milliseconds: 100),
+                                );
                               },
                               child: Text(
                                 'Finish',
@@ -601,7 +603,10 @@ Widget _firstTime(
                                     .update({'name': name})
                                     .eq('user_id', userId);
 
-                                changeFirstTime();
+                                changeName(name);
+                                await Future.delayed(
+                                  Duration(milliseconds: 100),
+                                );
                               },
                               child: Text(
                                 'Finish',
@@ -881,6 +886,7 @@ Widget _settingsPage(
                                     duration: Duration(seconds: 2),
                                   ),
                                 );
+                                return;
                               }
 
                               final user =
@@ -1008,6 +1014,16 @@ Widget _settingsPage(
                           ? () async {
                               final name = newNameController.text.trim();
 
+                              if (name.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text("New name can't be empty"),
+                                    duration: Duration(seconds: 2),
+                                  ),
+                                );
+                                return;
+                              }
+
                               final user =
                                   Supabase.instance.client.auth.currentUser;
 
@@ -1049,8 +1065,7 @@ Widget _settingsPage(
                         'Update',
                         style: TextStyle(
                           fontFamily: 'Inter',
-                          color:
-                              isEditingName
+                          color: isEditingName
                               ? Colors.black
                               : Colors.grey[500],
                           fontWeight: FontWeight.bold,
