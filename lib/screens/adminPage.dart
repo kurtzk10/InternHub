@@ -94,165 +94,120 @@ class _AdminPageState extends State<AdminPage> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    final orange = Color(0xffF5761A);
-    final selectedOrange = Color(0xffD26217);
     final isWide = screenWidth > 600;
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        appBar: firstTime
-            ? PreferredSize(
-                preferredSize: Size.fromHeight(screenHeight * 0.08),
-                child: Container(
-                  margin: EdgeInsets.only(
-                    left: screenWidth * 0.075,
-                    right: screenWidth * 0.04,
-                    top: screenHeight * 0.02,
-                  ),
-                  child: AppBar(
-                    leading: Container(
-                      child: Image.asset(
-                        'assets/logo-no-text.png',
-                        height: 20,
-                        width: 20,
-                      ),
-                    ),
-                  ),
-                ),
-              )
-            : PreferredSize(
-                preferredSize: Size.fromHeight(
-                  isWide ? screenHeight * 0.1 : screenHeight * 0.08,
-                ),
-                child: AppBar(
-                  backgroundColor: orange,
-                  centerTitle: true,
-                  title: Padding(
-                    padding: EdgeInsets.symmetric(vertical: screenHeight * 0.1),
-                    child: Image.asset(
-                      'assets/logo-no-text.png',
-                      height: isWide ? 30 : 35,
-                      width: isWide ? 30 : 35,
-                    ),
-                  ),
-                ),
-              ),
-        body: firstTime
-            ? LayoutBuilder(
-                builder: (context, constraints) {
-                  return SingleChildScrollView(
-                    child: ConstrainedBox(
-                      constraints: BoxConstraints(
-                        minHeight: constraints.maxHeight,
-                      ),
-                      child: Padding(
-                        padding: EdgeInsets.symmetric(
-                          horizontal: screenWidth / 10,
-                        ),
-                        child: Center(
-                          child: _firstTime(
-                            context,
-                            screenWidth,
-                            screenHeight,
-                            _formKey,
-                            orange,
-                            isWide,
-                            _nameController,
-                            (name) => setState(() {
-                              _newNameController.text = name;
-                              firstTime = false;
-                            }),
-                          ),
-                        ),
-                      ),
-                    ),
-                  );
-                },
-              )
-            : Padding(
-                padding: EdgeInsets.symmetric(horizontal: screenWidth / 10),
-                child: homeFocus
-                    ? _homePage(
-                        context,
-                        screenWidth,
-                        screenHeight,
-                        orange,
-                        isWide,
-                      )
-                    : _settingsPage(
-                        context,
-                        screenWidth,
-                        screenHeight,
-                        orange,
-                        isWide,
-                        _emailController,
-                        _passwordController,
-                        _newNameController,
-                        _loginFormKey,
-                        _nameFormKey,
-                        isEditingEmail,
-                        isEditingPassword,
-                        isEditingName,
-                        isPasswordPlain,
-                        emailChanged,
-                        passwordChanged,
-                        () => setState(() {
-                          isEditingEmail = !isEditingEmail;
-                        }),
-                        () => setState(() {
-                          isEditingPassword = !isEditingPassword;
-                        }),
-                        () => setState(() {
-                          isEditingName = !isEditingName;
-                        }),
-                        () => setState(() {
-                          isPasswordPlain = !isPasswordPlain;
-                        }),
-                      ),
-              ),
-        bottomNavigationBar: Container(
-          height: screenHeight * 0.08,
-          color: orange,
-          child: Row(
+        backgroundColor: const Color(0xFF02243F),
+        appBar: null,
+        body: SafeArea(
+          child: Column(
             children: [
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: homeFocus ? selectedOrange : orange,
-                    minimumSize: Size(screenHeight, double.infinity),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
+              // Modern Header
+              Container(
+                padding: EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/logo-no-text.png',
+                      height: 32,
+                      width: 32,
                     ),
-                  ),
-                  onPressed: homeFocus
-                      ? null
-                      : () {
-                          setState(() {
-                            homeFocus = true;
-                          });
-                        },
-                  child: Icon(Icons.home, color: Colors.white, size: 25),
+                    SizedBox(width: 12),
+                    Text(
+                      'InternHub',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Spacer(),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF04305A),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'Admin',
+                        style: TextStyle(
+                          color: const Color(0xFFF2A13B),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
+              
+              // Main Content
               Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: homeFocus ? orange : selectedOrange,
-                    minimumSize: Size(screenHeight, double.infinity),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                  ),
-                  onPressed: homeFocus
-                      ? () {
-                          setState(() {
-                            homeFocus = false;
-                          });
-                        }
-                      : null,
-                  child: Icon(Icons.settings, color: Colors.white, size: 25),
+                child: firstTime
+                    ? _buildFirstTimePage(context, screenWidth, screenHeight, isWide)
+                    : homeFocus
+                    ? _buildHomePage(context, screenWidth, screenHeight, isWide)
+                    : _buildSettingsPage(context, screenWidth, screenHeight, isWide),
+              ),
+            ],
+          ),
+        ),
+        bottomNavigationBar: firstTime ? null : _buildModernBottomNav(),
+      ),
+    );
+  }
+
+  Widget _buildModernBottomNav() {
+    return Container(
+      height: 80,
+      decoration: BoxDecoration(
+        color: const Color(0xFF04305A),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF04305A).withOpacity(0.3),
+            blurRadius: 10,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _buildNavItem(true, Icons.home_outlined, 'Home'),
+          _buildNavItem(false, Icons.settings_outlined, 'Settings'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(bool isHome, IconData icon, String label) {
+    final isSelected = homeFocus == isHome;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            homeFocus = isHome;
+          });
+        },
+        child: Container(
+          color: Colors.transparent,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? const Color(0xFFF55119) : const Color(0xFF7A8B9A),
+                size: 24,
+              ),
+              SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? const Color(0xFFF55119) : const Color(0xFF7A8B9A),
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
             ],
@@ -261,396 +216,336 @@ class _AdminPageState extends State<AdminPage> {
       ),
     );
   }
-}
 
-Widget _firstTime(
-  BuildContext context,
-  double screenWidth,
-  double screenHeight,
-  formKey,
-  orange,
-  bool isWide,
-  nameController,
-  void Function(dynamic) changeName,
-) {
-  return Container(
-    width: double.infinity,
-    height: screenHeight / 1.5,
-    padding: EdgeInsets.symmetric(horizontal: isWide ? screenWidth * 0.02 : 0),
-    decoration: BoxDecoration(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(20),
-      boxShadow: [
-        isWide
-            ? BoxShadow(
-                color: Color(0x88888888),
-                offset: Offset(1, 5),
-                blurRadius: 10,
-                spreadRadius: 2,
-              )
-            : BoxShadow(),
-      ],
-    ),
-    child: isWide
-        ? Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: screenWidth / 3,
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    RichText(
-                      textAlign: TextAlign.center,
-                      text: TextSpan(
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          fontSize: screenHeight / 15,
-                          color: Colors.black,
-                        ),
-                        children: [
-                          TextSpan(text: 'Welcome to '),
-                          TextSpan(
-                            text: 'InternHub',
-                            style: TextStyle(
-                              color: orange,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          TextSpan(text: '!'),
-                        ],
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      'Manage users, posts, and progress all in one place.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: screenHeight / 30,
-                        color: Colors.grey[700],
-                        height: 1.4,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              SizedBox(height: 20, width: 20),
-              Container(
-                width: screenWidth / 3,
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text("Name", style: TextStyle(fontFamily: 'Inter')),
-                      SizedBox(height: 10),
-                      Container(
-                        decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x88888888),
-                              offset: Offset(1, 5),
-                              blurRadius: 10,
-                              spreadRadius: 2,
-                            ),
-                          ],
-                        ),
-                        child: TextFormField(
-                          controller: nameController,
-                          cursorColor: Colors.black,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.white,
-                            hoverColor: Colors.white,
-                            hint: Text(
-                              'Coordinator Name',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                            border: _inputBorder(),
-                            enabledBorder: _inputBorder(),
-                            focusedBorder: _inputBorder(),
-                            errorBorder: _inputBorder(),
-                            focusedErrorBorder: _inputBorder(),
-                            contentPadding: EdgeInsets.all(10),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: orange,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Color(0x88888888),
-                                  offset: Offset(1, 5),
-                                  blurRadius: 10,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            width: screenWidth / 10,
-                            height: screenHeight / 10,
-                            child: TextButton(
-                              onPressed: () async {
-                                final name = nameController.text.trim();
-
-                                if (name.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        "Coordinator name can't be empty",
+  Widget _buildFirstTimePage(BuildContext context, double screenWidth, double screenHeight, bool isWide) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: constraints.maxHeight,
+            ),
+            child: Padding(
+              padding: EdgeInsets.symmetric(horizontal: 20),
+              child: Center(
+                child: Container(
+                  width: double.infinity,
+                  padding: EdgeInsets.all(40),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF04305A),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFF04305A), width: 1),
+                  ),
+                  child: isWide
+                      ? Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Container(
+                              width: screenWidth / 3,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  RichText(
+                                    textAlign: TextAlign.center,
+                                    text: TextSpan(
+                                      style: TextStyle(
+                                        fontFamily: 'Inter',
+                                        fontSize: screenHeight / 15,
+                                        color: Colors.white,
                                       ),
-                                      duration: Duration(seconds: 2),
+                                      children: [
+                                        TextSpan(text: 'Welcome to '),
+                                        TextSpan(
+                                          text: 'InternHub',
+                                          style: TextStyle(
+                                            color: const Color(0xFFF55119),
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        TextSpan(text: '!'),
+                                      ],
                                     ),
-                                  );
-                                  return;
-                                }
-
-                                final authUser =
-                                    Supabase.instance.client.auth.currentUser;
-                                if (authUser == null) return;
-
-                                final usersResponse = await Supabase
-                                    .instance
-                                    .client
-                                    .from('users')
-                                    .select('user_id')
-                                    .eq('auth_id', authUser.id)
-                                    .maybeSingle();
-
-                                if (usersResponse == null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text("Something went wrong."),
-                                      duration: Duration(seconds: 2),
+                                  ),
+                                  SizedBox(height: 10),
+                                  Text(
+                                    'Manage users, posts, and progress all in one place.',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: screenHeight / 30,
+                                      color: const Color(0xFFB8C5D1),
+                                      height: 1.4,
                                     ),
-                                  );
-                                }
+                                  ),
+                                ],
+                              ),
+                            ),
+                            SizedBox(width: 40),
+                            Container(
+                              width: screenWidth / 3,
+                              child: Form(
+                                key: _formKey,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text("Name", style: TextStyle(fontFamily: 'Inter', color: Colors.white)),
+                                    SizedBox(height: 10),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF02243F),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: const Color(0xFF04305A)),
+                                      ),
+                                      child: TextFormField(
+                                        controller: _nameController,
+                                        style: TextStyle(color: Colors.white),
+                                        decoration: InputDecoration(
+                                          hintText: 'Coordinator Name',
+                                          hintStyle: TextStyle(color: const Color(0xFF7A8B9A)),
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.all(16),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: 20),
+                                    Container(
+                                      width: double.infinity,
+                                      height: 56,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [const Color(0xFFF55119), const Color(0xFFF27B12)],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: TextButton(
+                                        onPressed: () async {
+                                          final name = _nameController.text.trim();
 
-                                final userId = usersResponse!['user_id'];
+                                          if (name.isEmpty) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text("Coordinator name can't be empty"),
+                                                backgroundColor: Colors.red,
+                                                duration: Duration(seconds: 2),
+                                              ),
+                                            );
+                                            return;
+                                          }
 
-                                final updateResponse = await Supabase
-                                    .instance
-                                    .client
-                                    .from('admin')
-                                    .update({'name': name})
-                                    .eq('user_id', userId);
+                                          final authUser = Supabase.instance.client.auth.currentUser;
+                                          if (authUser == null) return;
 
-                                changeName(name);
-                                await Future.delayed(
-                                  Duration(milliseconds: 100),
-                                );
-                              },
-                              child: Text(
-                                'Finish',
-                                style: TextStyle(
-                                  fontFamily: 'Inter',
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
+                                          final usersResponse = await Supabase
+                                              .instance
+                                              .client
+                                              .from('users')
+                                              .select('user_id')
+                                              .eq('auth_id', authUser.id)
+                                              .maybeSingle();
+
+                                          if (usersResponse == null) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text("Something went wrong."),
+                                                backgroundColor: Colors.red,
+                                                duration: Duration(seconds: 2),
+                                              ),
+                                            );
+                                            return;
+                                          }
+
+                                          final userId = usersResponse['user_id'];
+
+                                          await Supabase
+                                              .instance
+                                              .client
+                                              .from('admin')
+                                              .update({'name': name})
+                                              .eq('user_id', userId);
+
+                                          setState(() {
+                                            _newNameController.text = name;
+                                            firstTime = false;
+                                          });
+                                        },
+                                        child: Text(
+                                          'Finish',
+                                          style: TextStyle(
+                                            fontFamily: 'Inter',
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-          )
-        : Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              RichText(
-                textAlign: TextAlign.center,
-                text: TextSpan(
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: screenHeight / 25,
-                    color: Colors.black,
-                  ),
-                  children: [
-                    TextSpan(text: 'Welcome to '),
-                    TextSpan(
-                      text: 'InternHub',
-                      style: TextStyle(
-                        color: orange,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    TextSpan(text: '!'),
-                  ],
-                ),
-              ),
-              SizedBox(height: 10),
-              Text(
-                'Manage users, posts, and progress all in one place.',
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  fontSize: screenHeight / 60,
-                  color: Colors.grey[700],
-                  height: 1.4,
-                ),
-              ),
-              SizedBox(height: 20),
-              Container(
-                child: Form(
-                  key: formKey,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text("Name", style: TextStyle(fontFamily: 'Inter')),
-                      SizedBox(height: 10),
-                      Container(
-                        decoration: BoxDecoration(
-                          boxShadow: [
-                            BoxShadow(
-                              color: Color(0x88888888),
-                              offset: Offset(1, 5),
-                              blurRadius: 10,
-                              spreadRadius: 2,
-                            ),
                           ],
-                        ),
-                        child: TextFormField(
-                          controller: nameController,
-                          cursorColor: Colors.black,
-                          decoration: InputDecoration(
-                            filled: true,
-                            fillColor: Colors.white,
-                            hoverColor: Colors.white,
-                            hint: Text(
-                              'Coordinator Name',
-                              style: TextStyle(color: Colors.grey),
-                            ),
-                            border: _inputBorder(),
-                            enabledBorder: _inputBorder(),
-                            focusedBorder: _inputBorder(),
-                            errorBorder: _inputBorder(),
-                            focusedErrorBorder: _inputBorder(),
-                            contentPadding: EdgeInsets.all(10),
-                          ),
-                        ),
-                      ),
-                      SizedBox(height: 10),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                              color: orange,
-                              borderRadius: BorderRadius.circular(20),
-                              boxShadow: [
-                                BoxShadow(
-                                  color: Color(0x88888888),
-                                  offset: Offset(1, 5),
-                                  blurRadius: 10,
-                                  spreadRadius: 2,
-                                ),
-                              ],
-                            ),
-                            width: screenWidth / 5,
-                            height: screenHeight / 17.5,
-                            child: TextButton(
-                              onPressed: () async {
-                                final name = nameController.text.trim();
-
-                                if (name.isEmpty) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        "Coordinator name can't be empty",
-                                      ),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                  return;
-                                }
-
-                                final authUser =
-                                    Supabase.instance.client.auth.currentUser;
-                                if (authUser == null) return;
-
-                                final usersResponse = await Supabase
-                                    .instance
-                                    .client
-                                    .from('users')
-                                    .select('user_id')
-                                    .eq('auth_id', authUser.id)
-                                    .maybeSingle();
-
-                                if (usersResponse == null) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text("Something went wrong."),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                }
-
-                                final userId = usersResponse!['user_id'];
-
-                                final updateResponse = await Supabase
-                                    .instance
-                                    .client
-                                    .from('admin')
-                                    .update({'name': name})
-                                    .eq('user_id', userId);
-
-                                changeName(name);
-                                await Future.delayed(
-                                  Duration(milliseconds: 100),
-                                );
-                              },
-                              child: Text(
-                                'Finish',
+                        )
+                      : Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            RichText(
+                              textAlign: TextAlign.center,
+                              text: TextSpan(
                                 style: TextStyle(
                                   fontFamily: 'Inter',
-                                  color: Colors.black,
-                                  fontWeight: FontWeight.bold,
+                                  fontSize: screenHeight / 25,
+                                  color: Colors.white,
+                                ),
+                                children: [
+                                  TextSpan(text: 'Welcome to '),
+                                  TextSpan(
+                                    text: 'InternHub',
+                                    style: TextStyle(
+                                      color: const Color(0xFFF55119),
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  TextSpan(text: '!'),
+                                ],
+                              ),
+                            ),
+                            SizedBox(height: 10),
+                            Text(
+                              'Manage users, posts, and progress all in one place.',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: screenHeight / 60,
+                                color: const Color(0xFFB8C5D1),
+                                height: 1.4,
+                              ),
+                            ),
+                            SizedBox(height: 30),
+                            Container(
+                              child: Form(
+                                key: _formKey,
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text("Name", style: TextStyle(fontFamily: 'Inter', color: Colors.white)),
+                                    SizedBox(height: 10),
+                                    Container(
+                                      decoration: BoxDecoration(
+                                        color: const Color(0xFF02243F),
+                                        borderRadius: BorderRadius.circular(12),
+                                        border: Border.all(color: const Color(0xFF04305A)),
+                                      ),
+                                      child: TextFormField(
+                                        controller: _nameController,
+                                        style: TextStyle(color: Colors.white),
+                                        decoration: InputDecoration(
+                                          hintText: 'Coordinator Name',
+                                          hintStyle: TextStyle(color: const Color(0xFF7A8B9A)),
+                                          border: InputBorder.none,
+                                          contentPadding: EdgeInsets.all(16),
+                                        ),
+                                      ),
+                                    ),
+                                    SizedBox(height: 20),
+                                    Container(
+                                      width: double.infinity,
+                                      height: 56,
+                                      decoration: BoxDecoration(
+                                        gradient: LinearGradient(
+                                          colors: [const Color(0xFFF55119), const Color(0xFFF27B12)],
+                                          begin: Alignment.topLeft,
+                                          end: Alignment.bottomRight,
+                                        ),
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: TextButton(
+                                        onPressed: () async {
+                                          final name = _nameController.text.trim();
+
+                                          if (name.isEmpty) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text("Coordinator name can't be empty"),
+                                                backgroundColor: Colors.red,
+                                                duration: Duration(seconds: 2),
+                                              ),
+                                            );
+                                            return;
+                                          }
+
+                                          final authUser = Supabase.instance.client.auth.currentUser;
+                                          if (authUser == null) return;
+
+                                          final usersResponse = await Supabase
+                                              .instance
+                                              .client
+                                              .from('users')
+                                              .select('user_id')
+                                              .eq('auth_id', authUser.id)
+                                              .maybeSingle();
+
+                                          if (usersResponse == null) {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              SnackBar(
+                                                content: Text("Something went wrong."),
+                                                backgroundColor: Colors.red,
+                                                duration: Duration(seconds: 2),
+                                              ),
+                                            );
+                                            return;
+                                          }
+
+                                          final userId = usersResponse['user_id'];
+
+                                          await Supabase
+                                              .instance
+                                              .client
+                                              .from('admin')
+                                              .update({'name': name})
+                                              .eq('user_id', userId);
+
+                                          setState(() {
+                                            _newNameController.text = name;
+                                            firstTime = false;
+                                          });
+                                        },
+                                        child: Text(
+                                          'Finish',
+                                          style: TextStyle(
+                                            fontFamily: 'Inter',
+                                            color: Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 16,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ],
                                 ),
                               ),
                             ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
+                          ],
+                        ),
                 ),
               ),
-            ],
+            ),
           ),
-  );
-}
+        );
+      },
+    );
+  }
 
-Widget _homePage(
-  BuildContext context,
-  double screenWidth,
-  double screenHeight,
-  orange,
-  bool isWide,
-) {
-  return Container(
-    height: double.infinity,
-    padding: EdgeInsets.symmetric(vertical: screenHeight / 50),
-    child: Column(
-      spacing: 10,
-      children: [
-        Expanded(
-          child: Material(
-            color: Colors.white,
-            elevation: 5,
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                print('Manage Users clicked!');
+  Widget _buildHomePage(BuildContext context, double screenWidth, double screenHeight, bool isWide) {
+    return Container(
+      padding: EdgeInsets.all(20),
+      child: Column(
+        children: [
+          Expanded(
+            child: _buildAdminCard(
+              'Manage Students',
+              Icons.people_outline,
+              () {
                 Navigator.push(
                   context,
                   PageRouteBuilder(
@@ -659,27 +554,14 @@ Widget _homePage(
                   ),
                 );
               },
-              child: Container(
-                width: double.infinity,
-                alignment: Alignment.center,
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Manage Students',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ),
             ),
           ),
-        ),
-        Expanded(
-          child: Material(
-            color: Colors.white,
-            elevation: 5,
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                print('Manage Companies clicked!');
+          SizedBox(height: 16),
+          Expanded(
+            child: _buildAdminCard(
+              'Manage Companies',
+              Icons.business_outlined,
+              () {
                 Navigator.push(
                   context,
                   PageRouteBuilder(
@@ -688,475 +570,412 @@ Widget _homePage(
                   ),
                 );
               },
-              child: Container(
-                width: double.infinity,
-                alignment: Alignment.center,
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'Manage Companies',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ),
             ),
           ),
-        ),
-        Expanded(
-          child: Material(
-            color: Colors.white,
-            elevation: 5,
-            borderRadius: BorderRadius.circular(12),
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: () {
-                print('View Logs clicked!');
+          SizedBox(height: 16),
+          Expanded(
+            child: _buildAdminCard(
+              'View Logs',
+              Icons.assessment_outlined,
+              () {
+                // TODO: Implement logs functionality
               },
-              child: Container(
-                width: double.infinity,
-                alignment: Alignment.center,
-                padding: const EdgeInsets.all(16),
-                child: Text(
-                  'View Logs',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdminCard(String title, IconData icon, VoidCallback onTap) {
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: const Color(0xFF04305A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF04305A), width: 1),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          onTap: onTap,
+          child: Padding(
+            padding: EdgeInsets.all(24),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(
+                  icon,
+                  size: 48,
+                  color: const Color(0xFFF55119),
                 ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-Widget _settingsPage(
-  BuildContext context,
-  double screenWidth,
-  double screenHeight,
-  orange,
-  bool isWide,
-  TextEditingController emailController,
-  TextEditingController passwordController,
-  TextEditingController newNameController,
-  loginFormKey,
-  nameFormKey,
-  bool isEditingEmail,
-  bool isEditingPassword,
-  bool isEditingName,
-  bool isPasswordPlain,
-  bool emailChanged,
-  bool passwordChanged,
-  VoidCallback editEmailChange,
-  VoidCallback editPasswordChange,
-  VoidCallback editNameChange,
-  VoidCallback passwordVisibilityChange,
-) {
-  return SingleChildScrollView(
-    padding: EdgeInsets.symmetric(vertical: screenHeight / 50),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(height: 10),
-        Text(
-          'Edit Profile',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 20),
-        Material(
-          color: Colors.white,
-          elevation: 5,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: loginFormKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Login Information',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: isWide
-                              ? screenHeight / 10
-                              : screenHeight / 20,
-                          child: TextFormField(
-                            controller: emailController,
-                            enabled: isEditingEmail,
-                            cursorColor: Colors.black,
-                            decoration: InputDecoration(
-                              labelText: 'Email',
-                              floatingLabelStyle: TextStyle(
-                                color: isEditingEmail ? orange : null,
-                              ),
-                              border: _inputBorder(),
-                              enabledBorder: _inputBorder(),
-                              focusedBorder: _inputBorder(),
-                              contentPadding: EdgeInsets.all(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        splashColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onPressed: () => editEmailChange(),
-                        icon: Icon(
-                          isEditingEmail ? Icons.edit_off : Icons.edit,
-                          color: orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: isWide
-                              ? screenHeight / 10
-                              : screenHeight / 20,
-                          child: TextFormField(
-                            controller: passwordController,
-                            obscureText: !isPasswordPlain,
-                            enabled: isEditingPassword,
-                            cursorColor: Colors.black,
-                            decoration: InputDecoration(
-                              labelText: 'New Password',
-                              floatingLabelStyle: TextStyle(color: orange),
-                              border: _inputBorder(),
-                              enabledBorder: _inputBorder(),
-                              focusedBorder: _inputBorder(),
-                              contentPadding: EdgeInsets.all(10),
-                              suffixIcon: IconButton(
-                                splashColor: Colors.transparent,
-                                highlightColor: Colors.transparent,
-                                onPressed: passwordVisibilityChange,
-                                icon: Icon(
-                                  isPasswordPlain
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                  color: isEditingPassword
-                                      ? orange
-                                      : Colors.grey,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        splashColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onPressed: () => editPasswordChange(),
-                        icon: Icon(
-                          isEditingPassword ? Icons.edit_off : Icons.edit,
-                          color: orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  Center(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: orange,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                      ),
-                      onPressed:
-                          ((isEditingEmail && emailChanged) ||
-                              (isEditingPassword && passwordChanged))
-                          ? () async {
-                              bool valid = false;
-
-                              final email = emailController.text.trim();
-                              final password = passwordController.text.trim();
-
-                              if (email.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text("Email can't be empty."),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                                return;
-                              }
-
-                              final user =
-                                  Supabase.instance.client.auth.currentUser;
-
-                              if (user != null) {
-                                try {
-                                  final emailResponse = await Supabase
-                                      .instance
-                                      .client
-                                      .auth
-                                      .updateUser(
-                                        UserAttributes(
-                                          email: email,
-                                          password: password.isEmpty
-                                              ? null
-                                              : password,
-                                        ),
-                                      );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'A confirmation email has been sent to $email. Confirm to change your email.',
-                                      ),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                  valid = true;
-                                } on AuthException catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(e.message),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                }
-                              }
-                              if (valid) {
-                                if (isEditingEmail) editEmailChange();
-                                if (isEditingPassword) editPasswordChange();
-                              }
-                            }
-                          : null,
-                      child: Text(
-                        'Update',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          color:
-                              ((isEditingEmail && emailChanged) ||
-                                  (isEditingPassword && passwordChanged))
-                              ? Colors.black
-                              : Colors.grey[500],
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: 10),
-        Material(
-          color: Colors.white,
-          elevation: 5,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Form(
-              key: nameFormKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Personal Information',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: isWide
-                              ? screenHeight / 10
-                              : screenHeight / 20,
-                          child: TextFormField(
-                            controller: newNameController,
-                            enabled: isEditingName,
-                            cursorColor: Colors.black,
-                            decoration: InputDecoration(
-                              labelText: 'Name',
-                              floatingLabelStyle: TextStyle(
-                                color: isEditingName ? orange : null,
-                              ),
-                              border: _inputBorder(),
-                              enabledBorder: _inputBorder(),
-                              focusedBorder: _inputBorder(),
-                              contentPadding: EdgeInsets.all(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        splashColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onPressed: () => editNameChange(),
-                        icon: Icon(
-                          isEditingName ? Icons.edit_off : Icons.edit,
-                          color: orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Center(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: orange,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                      ),
-                      onPressed: isEditingName
-                          ? () async {
-                              final name = newNameController.text.trim();
-
-                              if (name.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text("New name can't be empty"),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                                return;
-                              }
-
-                              final user =
-                                  Supabase.instance.client.auth.currentUser;
-
-                              final usersResponse = await Supabase
-                                  .instance
-                                  .client
-                                  .from('users')
-                                  .select('user_id')
-                                  .eq('auth_id', user!.id)
-                                  .maybeSingle();
-
-                              final userId = usersResponse!['user_id'];
-
-                              try {
-                                final nameResponse = await Supabase
-                                    .instance
-                                    .client
-                                    .from('admin')
-                                    .update({'name': name})
-                                    .eq('user_id', userId);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Successfully updated!'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              } on AuthException catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(e.message),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                              editNameChange();
-                            }
-                          : null,
-                      child: Text(
-                        'Update',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          color: isEditingName
-                              ? Colors.black
-                              : Colors.grey[500],
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: 20),
-        Material(
-          color: orange,
-          elevation: 5,
-          borderRadius: BorderRadius.circular(12),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    backgroundColor: Colors.white,
-                    title: Text('Confirm', style: TextStyle(color: orange)),
-                    content: const Text('Are you sure you want to log out?'),
-                    actions: <Widget>[
-                      TextButton(
-                        child: Text('Cancel', style: TextStyle(color: orange)),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          backgroundColor: orange,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: Text('Confirm'),
-                        onPressed: () async {
-                          try {
-                            await Supabase.instance.client.auth.signOut();
-
-                            Navigator.of(context).pushAndRemoveUntil(
-                              PageRouteBuilder(
-                                pageBuilder: (_, __, ___) => LoginPage(),
-                                transitionDuration: Duration.zero,
-                              ),
-                              (route) => false,
-                            );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Failed to log out: $e'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Center(
-                child: Text(
-                  'Log out',
+                SizedBox(height: 16),
+                Text(
+                  title,
                   style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 16,
+                    color: Colors.white,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
                   ),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSettingsPage(BuildContext context, double screenWidth, double screenHeight, bool isWide) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Account Settings',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          SizedBox(height: 20),
+          _buildSettingsSection(
+            'Login Information',
+            Icons.lock_outline,
+            [
+              _buildSettingsField(
+                'Email',
+                _emailController,
+                isEditingEmail,
+                () => setState(() => isEditingEmail = !isEditingEmail),
+                emailChanged,
+                _updateLoginInfo,
+              ),
+              _buildPasswordField(
+                'New Password',
+                _passwordController,
+                isEditingPassword,
+                () => setState(() => isEditingPassword = !isEditingPassword),
+                passwordChanged,
+                _updateLoginInfo,
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          _buildSettingsSection(
+            'Personal Information',
+            Icons.person_outline,
+            [
+              _buildSettingsField(
+                'Name',
+                _newNameController,
+                isEditingName,
+                () => setState(() => isEditingName = !isEditingName),
+                true,
+                _updateNameInfo,
+              ),
+            ],
+          ),
+          SizedBox(height: 30),
+          Container(
+            width: double.infinity,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.red,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TextButton(
+              onPressed: () => _showLogoutDialog(),
+              child: Text(
+                'Logout',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
             ),
           ),
-        ),
-        SizedBox(height: 20),
-      ],
-    ),
-  );
-}
+        ],
+      ),
+    );
+  }
 
-OutlineInputBorder _inputBorder() {
-  return OutlineInputBorder(
-    borderSide: BorderSide(color: Colors.black),
-    borderRadius: BorderRadius.circular(12.5),
-  );
+  Widget _buildSettingsSection(String title, IconData icon, List<Widget> children) {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF04305A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF04305A), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: const Color(0xFFF2A13B), size: 20),
+              SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsField(
+    String label,
+    TextEditingController controller,
+    bool isEditing,
+    VoidCallback onEditToggle,
+    bool hasChanges,
+    VoidCallback onUpdate,
+  ) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller,
+              enabled: isEditing,
+              style: TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: label,
+                labelStyle: TextStyle(color: const Color(0xFFB8C5D1)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: const Color(0xFF04305A)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: const Color(0xFF04305A)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: const Color(0xFFF55119)),
+                ),
+                filled: true,
+                fillColor: const Color(0xFF02243F),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+          ),
+          SizedBox(width: 8),
+          IconButton(
+            onPressed: onEditToggle,
+            icon: Icon(
+              isEditing ? Icons.check : Icons.edit,
+              color: isEditing ? const Color(0xFFF55119) : const Color(0xFFB8C5D1),
+            ),
+          ),
+          if (isEditing && hasChanges)
+            IconButton(
+              onPressed: onUpdate,
+              icon: Icon(
+                Icons.save,
+                color: const Color(0xFFF55119),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPasswordField(
+    String label,
+    TextEditingController controller,
+    bool isEditing,
+    VoidCallback onEditToggle,
+    bool hasChanges,
+    VoidCallback onUpdate,
+  ) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller,
+              enabled: isEditing,
+              obscureText: !isPasswordPlain,
+              style: TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: label,
+                labelStyle: TextStyle(color: const Color(0xFFB8C5D1)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: const Color(0xFF04305A)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: const Color(0xFF04305A)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: const Color(0xFFF55119)),
+                ),
+                filled: true,
+                fillColor: const Color(0xFF02243F),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                suffixIcon: isEditing
+                    ? IconButton(
+                        onPressed: () => setState(() => isPasswordPlain = !isPasswordPlain),
+                        icon: Icon(
+                          isPasswordPlain ? Icons.visibility_off : Icons.visibility,
+                          color: const Color(0xFFF55119),
+                        ),
+                      )
+                    : null,
+              ),
+            ),
+          ),
+          SizedBox(width: 8),
+          IconButton(
+            onPressed: onEditToggle,
+            icon: Icon(
+              isEditing ? Icons.check : Icons.edit,
+              color: isEditing ? const Color(0xFFF55119) : const Color(0xFFB8C5D1),
+            ),
+          ),
+          if (isEditing && hasChanges)
+            IconButton(
+              onPressed: onUpdate,
+              icon: Icon(
+                Icons.save,
+                color: const Color(0xFFF55119),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _updateLoginInfo() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty) {
+      _showSnackBar("Email can't be empty.");
+      return;
+    }
+
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      try {
+        await Supabase.instance.client.auth.updateUser(
+          UserAttributes(
+            email: email,
+            password: password.isEmpty ? null : password,
+          ),
+        );
+        _showSnackBar('A confirmation email has been sent to $email. Confirm to change your email.', isSuccess: true);
+        setState(() {
+          isEditingEmail = false;
+          isEditingPassword = false;
+        });
+      } catch (e) {
+        _showSnackBar("Error: $e");
+      }
+    }
+  }
+
+  Future<void> _updateNameInfo() async {
+    final name = _newNameController.text.trim();
+
+    if (name.isEmpty) {
+      _showSnackBar("Name can't be empty");
+      return;
+    }
+
+    final user = Supabase.instance.client.auth.currentUser;
+    final usersResponse = await Supabase
+        .instance
+        .client
+        .from('users')
+        .select('user_id')
+        .eq('auth_id', user!.id)
+        .maybeSingle();
+
+    final userId = usersResponse!['user_id'];
+
+    try {
+      await Supabase
+          .instance
+          .client
+          .from('admin')
+          .update({'name': name})
+          .eq('user_id', userId);
+      _showSnackBar('Successfully updated!', isSuccess: true);
+      setState(() {
+        isEditingName = false;
+      });
+    } catch (e) {
+      _showSnackBar("Error: $e");
+    }
+  }
+
+  void _showSnackBar(String message, {bool isSuccess = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isSuccess ? const Color(0xFF04305A) : Colors.red,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF02243F),
+          title: Text('Confirm Logout', style: TextStyle(color: Colors.white)),
+          content: Text('Are you sure you want to log out?', style: TextStyle(color: const Color(0xFFB8C5D1))),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel', style: TextStyle(color: const Color(0xFFB8C5D1))),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('Logout'),
+              onPressed: () async {
+                try {
+                  await Supabase.instance.client.auth.signOut();
+                  Navigator.of(context).pushAndRemoveUntil(
+                    PageRouteBuilder(
+                      pageBuilder: (_, __, ___) => LoginPage(),
+                      transitionDuration: Duration.zero,
+                    ),
+                    (route) => false,
+                  );
+                } catch (e) {
+                  _showSnackBar('Failed to log out: $e');
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 }

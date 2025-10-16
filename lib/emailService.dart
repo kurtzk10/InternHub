@@ -6,6 +6,7 @@ class EmailService {
   static const String templateId = 'template_2naqu4q';
   static const String publicKey = 'l_oDGrnB_D3bFV67I';
 
+  // Application notification email
   static Future<bool> sendEmail({
     required String name,
     required String email,
@@ -37,5 +38,27 @@ class EmailService {
     print(response.statusCode);
     print(response.body);
     return response.statusCode == 200;
+  }
+
+  // Email confirmation notification (optional - Supabase handles this automatically)
+  static Future<bool> sendConfirmationEmail({
+    required String email,
+    required String name,
+    required String confirmationLink,
+  }) async {
+    // This is optional since Supabase automatically sends confirmation emails
+    // You can customize this if you want to send additional notifications
+    return true;
+  }
+
+  // Password reset notification (optional - Supabase handles this automatically)
+  static Future<bool> sendPasswordResetEmail({
+    required String email,
+    required String name,
+    required String resetLink,
+  }) async {
+    // This is optional since Supabase automatically sends password reset emails
+    // You can customize this if you want to send additional notifications
+    return true;
   }
 }

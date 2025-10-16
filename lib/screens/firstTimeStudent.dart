@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:internhub/screens/studentPage.dart';
+import 'package:internhub/screens/modernStudentPage.dart';
+import 'package:internhub/screens/login.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:internhub/internetHelper.dart';
 
@@ -57,6 +58,24 @@ class _FirstTimeStudentPageState extends State<FirstTimeStudentPage> {
                   width: 20,
                 ),
               ),
+              actions: [
+                TextButton(
+                  onPressed: () async {
+                    await Supabase.instance.client.auth.signOut();
+                    Navigator.of(context).pushAndRemoveUntil(
+                      PageRouteBuilder(
+                        pageBuilder: (_, __, ___) => LoginPage(),
+                        transitionDuration: Duration.zero,
+                      ),
+                      (route) => false,
+                    );
+                  },
+                  child: Text(
+                    'Logout',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -90,7 +109,7 @@ class _FirstTimeStudentPageState extends State<FirstTimeStudentPage> {
                           Navigator.pushReplacement(
                             context,
                             PageRouteBuilder(
-                              pageBuilder: (_, __, ___) => StudentPage(),
+                              pageBuilder: (_, __, ___) => ModernStudentPage(),
                               transitionDuration: Duration.zero
                             ),
                           );

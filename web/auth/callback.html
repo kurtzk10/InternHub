@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InternHub - Email Confirmation</title>
+  <style>
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .container {
+      background: white;
+      padding: 2rem;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+      text-align: center;
+      max-width: 400px;
+      width: 90%;
+    }
+    .logo {
+      width: 60px;
+      height: 60px;
+      margin: 0 auto 1rem;
+      background: #F5761A;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      font-weight: bold;
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 1rem;
+    }
+    p {
+      color: #666;
+      line-height: 1.6;
+      margin-bottom: 2rem;
+    }
+    .success {
+      color: #4CAF50;
+    }
+    .error {
+      color: #f44336;
+    }
+    .loading {
+      color: #F5761A;
+    }
+    .btn {
+      background: #F5761A;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 10px;
+      font-size: 16px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      transition: background 0.3s;
+    }
+    .btn:hover {
+      background: #e0660f;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="logo">IH</div>
+    <h1>Email Confirmation</h1>
+    <p id="message" class="loading">Processing your email confirmation...</p>
+    <a href="/" class="btn" id="continueBtn" style="display: none;">Continue to InternHub</a>
+  </div>
+
+  <script>
+    // Get URL parameters
+    const urlParams = new URLSearchParams(window.location.search);
+    const accessToken = urlParams.get('access_token');
+    const refreshToken = urlParams.get('refresh_token');
+    const error = urlParams.get('error');
+    const errorDescription = urlParams.get('error_description');
+
+    const messageEl = document.getElementById('message');
+    const continueBtn = document.getElementById('continueBtn');
+
+    if (error) {
+      // Handle error
+      messageEl.textContent = `Error: ${errorDescription || error}`;
+      messageEl.className = 'error';
+      continueBtn.style.display = 'inline-block';
+    } else if (accessToken) {
+      // Success - store tokens and redirect
+      messageEl.textContent = 'Email confirmed successfully!';
+      messageEl.className = 'success';
+      
+      // Store tokens in localStorage for the Flutter app to pick up
+      localStorage.setItem('supabase.auth.token', JSON.stringify({
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        expires_at: Date.now() + (3600 * 1000) // 1 hour from now
+      }));
+      
+      // Redirect to main app
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+    } else {
+      // No tokens found
+      messageEl.textContent = 'No confirmation data found. Please try again.';
+      messageEl.className = 'error';
+      continueBtn.style.display = 'inline-block';
+    }
+  </script>
+</body>
+</html>

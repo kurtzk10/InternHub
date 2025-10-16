@@ -5,7 +5,7 @@ import 'package:internhub/internetHelper.dart';
 import 'package:internhub/screens/login.dart';
 import 'package:internhub/screens/editListing.dart';
 import 'package:flutter/services.dart';
-import 'package:url_launcher/url_launcher.dart';
+import 'dart:async';
 
 class NumberFormatter extends TextInputFormatter {
   @override
@@ -21,11 +21,9 @@ class NumberFormatter extends TextInputFormatter {
 
     StringBuffer buffer = StringBuffer();
     int selectionIndex = newValue.selection.baseOffset;
-    int usedDigits = 0;
 
     for (int i = 0; i < digits.length; i++) {
       buffer.write(digits[i]);
-      usedDigits++;
 
       if (i == 3 || i == 6) {
         if (i != digits.length - 1) {
@@ -62,9 +60,6 @@ class _CompanyPageState extends State<CompanyPage> {
   final _numberController = TextEditingController();
   String? number;
 
-  final _loginFormKey = GlobalKey<FormState>();
-  final _companyFormKey = GlobalKey<FormState>();
-  final _contactFormKey = GlobalKey<FormState>();
 
   final _listingFormKey = GlobalKey<FormState>();
   final List<TextEditingController> _controllers = [TextEditingController()];
@@ -204,215 +199,125 @@ class _CompanyPageState extends State<CompanyPage> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
-    final orange = Color(0xffF5761A);
-    final selectedOrange = Color(0xffD26217);
     final isWide = screenWidth > 600;
 
     return GestureDetector(
       behavior: HitTestBehavior.translucent,
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
-        appBar: PreferredSize(
-          preferredSize: Size.fromHeight(
-            isWide ? screenHeight * 0.1 : screenHeight * 0.08,
-          ),
-          child: AppBar(
-            backgroundColor: orange,
-            centerTitle: true,
-            title: Padding(
-              padding: EdgeInsets.symmetric(vertical: screenHeight * 0.1),
-              child: Image.asset(
-                'assets/logo-no-text.png',
-                height: isWide ? 30 : 35,
-                width: isWide ? 30 : 35,
-              ),
-            ),
-          ),
-        ),
-
-        body: Padding(
-          padding: EdgeInsets.symmetric(horizontal: screenWidth / 10),
-          child: focus == Focus.home
-              ? _homePage(
-                  getListings,
-                  context,
-                  screenHeight,
-                  screenWidth,
-                  orange,
-                  isWide,
-                  companyDetails,
-                  listings,
-                )
-              : focus == Focus.add
-              ? _addPage(
-                  context,
-                  screenHeight,
-                  screenWidth,
-                  orange,
-                  _listingFormKey,
-                  isWide,
-                  companyDetails!['is_verified'],
-                  _titleController,
-                  _positionController,
-                  _locationController,
-                  _durationController,
-                  _descriptionController,
-                  _requirementsController,
-                  _linkController,
-                  (value) => setState(() {
-                    _durationController.text = value;
-                  }),
-                  _controllers,
-                  _addRequirement,
-                  () => setState(() {
-                    _controllers
-                      ..clear()
-                      ..add(TextEditingController());
-                    _titleController.text = '';
-                    _positionController.text = '';
-                    _locationController.text = '';
-                    _durationController.text = '';
-                    _descriptionController.text = '';
-                    _requirementsController.text = '';
-                    _linkController.text = '';
-                  }),
-                  () => setState(() {
-                    focus = Focus.home;
-                  }),
-                  companyDetails!['company_id'],
-                )
-              : _settingsPage(
-                  context,
-                  screenHeight,
-                  screenWidth,
-                  orange,
-                  isWide,
-                  _emailController,
-                  _passwordController,
-                  _nameController,
-                  _industryController,
-                  _contactController,
-                  _numberController,
-                  _loginFormKey,
-                  _companyFormKey,
-                  _contactFormKey,
-                  isEditingEmail,
-                  isEditingPassword,
-                  isEditingName,
-                  isEditingIndustry,
-                  isEditingContact,
-                  isEditingNumber,
-                  isPasswordPlain,
-                  emailChanged,
-                  passwordChanged,
-                  nameChanged,
-                  industryChanged,
-                  contactChanged,
-                  numberChanged,
-                  () => setState(() {
-                    isEditingEmail = !isEditingEmail;
-                  }),
-                  () => setState(() {
-                    isEditingPassword = !isEditingPassword;
-                  }),
-                  () => setState(() {
-                    isEditingName = !isEditingName;
-                  }),
-                  () => setState(() {
-                    isEditingIndustry = !isEditingIndustry;
-                  }),
-                  () => setState(() {
-                    isEditingContact = !isEditingContact;
-                  }),
-                  () => setState(() {
-                    isEditingNumber = !isEditingNumber;
-                  }),
-                  () => setState(() {
-                    isPasswordPlain = !isPasswordPlain;
-                  }),
-                ),
-        ),
-
-        bottomNavigationBar: Container(
-          height: screenHeight * 0.08,
-          color: orange,
-          child: Row(
+        backgroundColor: const Color(0xFF02243F),
+        appBar: null,
+        body: SafeArea(
+          child: Column(
             children: [
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: focus == Focus.home
-                        ? selectedOrange
-                        : orange,
-                    minimumSize: Size(screenHeight, double.infinity),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
+              // Modern Header
+              Container(
+                padding: EdgeInsets.all(20),
+                child: Row(
+                  children: [
+                    Image.asset(
+                      'assets/logo-no-text.png',
+                      height: 32,
+                      width: 32,
                     ),
-                  ),
-                  onPressed: focus == Focus.home
-                      ? null
-                      : () async {
-                          setState(() {
-                            focus = Focus.home;
-                            isEditingEmail = false;
-                            isEditingPassword = false;
-                            isEditingName = false;
-                            isEditingIndustry = false;
-                            isEditingContact = false;
-                            isEditingNumber = false;
-                          });
+                    SizedBox(width: 12),
+                    Text(
+                      'InternHub',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Spacer(),
+                    Container(
+                      padding: EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF04305A),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'Company',
+                        style: TextStyle(
+                          color: const Color(0xFFF2A13B),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              
+              // Main Content
+              Expanded(
+                child: focus == Focus.home
+                    ? _buildHomePage(context, screenHeight, screenWidth, isWide, companyDetails, listings)
+                    : focus == Focus.add
+                    ? _buildAddPage(context, screenHeight, screenWidth, isWide, companyDetails)
+                    : _buildSettingsPage(context, screenHeight, screenWidth, isWide),
+              ),
+            ],
+          ),
+        ),
 
-                          await getListings();
-                        },
-                  child: Icon(Icons.home, color: Colors.white, size: 25),
-                ),
+        bottomNavigationBar: _buildModernBottomNav(),
+      ),
+    );
+  }
+
+  Widget _buildModernBottomNav() {
+    return Container(
+      height: 80,
+      decoration: BoxDecoration(
+        color: const Color(0xFF04305A),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF04305A).withOpacity(0.3),
+            blurRadius: 10,
+            offset: Offset(0, -2),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          _buildNavItem(Focus.home, Icons.home_outlined, 'Home'),
+          _buildNavItem(Focus.add, Icons.add_circle_outline, 'Create'),
+          _buildNavItem(Focus.settings, Icons.settings_outlined, 'Settings'),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildNavItem(Focus focusType, IconData icon, String label) {
+    final isSelected = focus == focusType;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () {
+          setState(() {
+            focus = focusType;
+          });
+          if (focusType == Focus.home) {
+            getListings();
+          }
+        },
+        child: Container(
+          color: Colors.transparent,
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
+                color: isSelected ? const Color(0xFFF55119) : const Color(0xFF7A8B9A),
+                size: 24,
               ),
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: focus == Focus.add
-                        ? selectedOrange
-                        : orange,
-                    minimumSize: Size(screenHeight, double.infinity),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                  ),
-                  onPressed: focus == Focus.add
-                      ? null
-                      : () {
-                          setState(() {
-                            focus = Focus.add;
-                            isEditingEmail = false;
-                            isEditingPassword = false;
-                            isEditingName = false;
-                            isEditingIndustry = false;
-                            isEditingContact = false;
-                            isEditingNumber = false;
-                          });
-                        },
-                  child: Icon(Icons.add, color: Colors.white, size: 25),
-                ),
-              ),
-              Expanded(
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: focus == Focus.settings
-                        ? selectedOrange
-                        : orange,
-                    minimumSize: Size(screenHeight, double.infinity),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.zero,
-                    ),
-                  ),
-                  onPressed: focus == Focus.settings
-                      ? null
-                      : () {
-                          setState(() {
-                            focus = Focus.settings;
-                          });
-                        },
-                  child: Icon(Icons.settings, color: Colors.white, size: 25),
+              SizedBox(height: 4),
+              Text(
+                label,
+                style: TextStyle(
+                  color: isSelected ? const Color(0xFFF55119) : const Color(0xFF7A8B9A),
+                  fontSize: 12,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
             ],
@@ -421,1468 +326,1064 @@ class _CompanyPageState extends State<CompanyPage> {
       ),
     );
   }
-}
 
-Widget _homePage(
-  Future<void> Function() refreshListings,
-  BuildContext context,
-  double screenHeight,
-  double screenWidth,
-  orange,
-  bool isWide,
-  companyDetails,
-  listings,
-) {
-  return RefreshIndicator(
-    color: orange,
-    backgroundColor: Colors.white,
-    onRefresh: refreshListings,
-    child: SingleChildScrollView(
-      physics: AlwaysScrollableScrollPhysics(),
-      padding: EdgeInsets.symmetric(vertical: screenHeight / 50),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          Text(
-            'Your Listings',
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-          ),
-          listings.isNotEmpty
-              ? Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: listings.map<Widget>((listing) {
-                    return Padding(
-                      padding: EdgeInsets.symmetric(vertical: 6),
-                      child: ListingCard(listing, orange, refreshListings),
-                    );
-                  }).toList(),
-                )
-              : SizedBox(
-                  height: screenHeight * 0.7,
-                  child: Center(
-                    child: Text(
-                      "You don't have any posted listings.",
-                      style: TextStyle(fontSize: 16),
+  Widget _buildHomePage(BuildContext context, double screenHeight, double screenWidth, bool isWide, companyDetails, listings) {
+    return RefreshIndicator(
+      color: const Color(0xFFF55119),
+      backgroundColor: const Color(0xFF02243F),
+      onRefresh: getListings,
+      child: SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        padding: EdgeInsets.all(20),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Your Listings',
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 20),
+            listings.isNotEmpty
+                ? Column(
+                    children: listings.map<Widget>((listing) {
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: 16),
+                        child: _buildModernListingCard(listing),
+                      );
+                    }).toList(),
+                  )
+                : Container(
+                    height: screenHeight * 0.5,
+                    child: Center(
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.work_outline,
+                            size: 64,
+                            color: const Color(0xFF7A8B9A),
+                          ),
+                          SizedBox(height: 16),
+                          Text(
+                            "You don't have any posted listings.",
+                            style: TextStyle(
+                              color: const Color(0xFF7A8B9A),
+                              fontSize: 16,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildModernListingCard(Map<String, dynamic> listing) {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF04305A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF04305A), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  listing['title'],
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
+              ),
+              IconButton(
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    PageRouteBuilder(
+                      pageBuilder: (_, __, ___) => ViewApplicantsPage(listing),
+                      transitionDuration: Duration.zero,
+                    ),
+                  );
+                },
+                icon: Icon(Icons.people_outline, color: const Color(0xFFF55119)),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          _buildListingInfo('Position', listing['position'], Icons.work_outline),
+          _buildListingInfo('Location', listing['location'], Icons.location_on_outlined),
+          _buildListingInfo('Duration', listing['duration'], Icons.schedule),
+          if (listing['description']?.isNotEmpty == true) ...[
+            SizedBox(height: 12),
+            Text(
+              'Description',
+              style: TextStyle(
+                color: const Color(0xFFF2A13B),
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            SizedBox(height: 4),
+            Text(
+              listing['description'],
+              style: TextStyle(
+                color: const Color(0xFFB8C5D1),
+                fontSize: 14,
+              ),
+            ),
+          ],
+          SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF04305A),
+                    foregroundColor: const Color(0xFFF55119),
+                    side: BorderSide(color: const Color(0xFFF55119)),
+                  ),
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      PageRouteBuilder(
+                        pageBuilder: (_, __, ___) => EditListingPage(listing),
+                        transitionDuration: Duration.zero,
+                      ),
+                    );
+                  },
+                  child: Text('Edit'),
+                ),
+              ),
+              SizedBox(width: 12),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  onPressed: () => _showDeleteDialog(listing),
+                  child: Text('Delete'),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
-    ),
-  );
-}
+    );
+  }
 
-class ListingCard extends StatefulWidget {
-  final Map<String, dynamic> listing;
-  final Color orange;
-  final Future<void> Function() onRefresh;
+  Widget _buildListingInfo(String label, String value, IconData icon) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 8),
+      child: Row(
+        children: [
+          Icon(icon, color: const Color(0xFFF2A13B), size: 16),
+          SizedBox(width: 8),
+          Text(
+            '$label: ',
+            style: TextStyle(
+              color: const Color(0xFFF2A13B),
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                color: const Color(0xFFB8C5D1),
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
-  const ListingCard(this.listing, this.orange, this.onRefresh, {super.key});
-  @override
-  State<ListingCard> createState() => _ListingCardState();
-}
+  void _showDeleteDialog(Map<String, dynamic> listing) {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF02243F),
+          title: Text(
+            'Confirm',
+            style: TextStyle(color: Colors.white),
+          ),
+          content: Text(
+            'Are you sure you want to delete this listing?',
+            style: TextStyle(color: const Color(0xFFB8C5D1)),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: Text(
+                'Cancel',
+                style: TextStyle(color: const Color(0xFFB8C5D1)),
+              ),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('Confirm'),
+              onPressed: () async {
+                try {
+                  await Supabase.instance.client
+                      .from('listing')
+                      .delete()
+                      .eq('listing_id', listing['listing_id']);
+                  await getListings();
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Successfully deleted."),
+                      backgroundColor: const Color(0xFF04305A),
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                } catch (e) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text("Error: $e"),
+                      backgroundColor: Colors.red,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                }
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
 
-class _ListingCardState extends State<ListingCard> {
-  bool isExpanded = false;
+  Widget _buildAddPage(BuildContext context, double screenHeight, double screenWidth, bool isWide, companyDetails) {
+    if (companyDetails == null || !companyDetails['is_verified']) {
+      return Center(
+        child: Container(
+          padding: EdgeInsets.all(40),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.verified_user_outlined,
+                size: 64,
+                color: const Color(0xFF7A8B9A),
+              ),
+              SizedBox(height: 16),
+              Text(
+                'Verification Required',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 12),
+              Text(
+                'You are currently unverified. Contact a coordinator or administrator to help you get verified.',
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: const Color(0xFFB8C5D1),
+                  fontSize: 16,
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
 
-  Future<void> openLink(String url) async {
-    final uri = Uri.parse(url);
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Text(
+                'Create Listing',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Spacer(),
+              IconButton(
+                onPressed: () => setState(() => focus = Focus.home),
+                icon: Icon(Icons.close, color: const Color(0xFFB8C5D1)),
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          _buildAddForm(),
+        ],
+      ),
+    );
+  }
 
-    if (await canLaunchUrl(uri)) {
-      await launchUrl(uri, mode: LaunchMode.externalApplication);
-    } else {
-      print("Could not launch $url");
+  Widget _buildAddForm() {
+    return Form(
+      key: _listingFormKey,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildAddField('Title', _titleController, true, Icons.title),
+          SizedBox(height: 16),
+          _buildAddField('Job Position', _positionController, true, Icons.work_outline),
+          SizedBox(height: 16),
+          _buildAddField('Job Location', _locationController, true, Icons.location_on_outlined),
+          SizedBox(height: 16),
+          _buildDurationDropdown(),
+          SizedBox(height: 16),
+          _buildAddField('Description', _descriptionController, false, Icons.description_outlined, maxLines: 5),
+          SizedBox(height: 16),
+          _buildRequirementsSection(),
+          SizedBox(height: 16),
+          _buildAddField('LinkedIn Link', _linkController, true, Icons.link),
+          SizedBox(height: 30),
+          _buildCreateButton(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAddField(String label, TextEditingController controller, bool required, IconData icon, {int maxLines = 1}) {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF04305A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF04305A), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: const Color(0xFFF2A13B), size: 20),
+              SizedBox(width: 8),
+              Text(
+                label + (required ? ' *' : ''),
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          TextField(
+            controller: controller,
+            maxLines: maxLines,
+            style: TextStyle(color: Colors.white),
+            decoration: InputDecoration(
+              hintText: 'Enter $label',
+              hintStyle: TextStyle(color: const Color(0xFF7A8B9A)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: const Color(0xFF04305A)),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: const Color(0xFF04305A)),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(8),
+                borderSide: BorderSide(color: const Color(0xFFF55119)),
+              ),
+              filled: true,
+              fillColor: const Color(0xFF02243F),
+              contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDurationDropdown() {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF04305A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF04305A), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.schedule, color: const Color(0xFFF2A13B), size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Duration Type *',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: const Color(0xFF02243F),
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: const Color(0xFF04305A)),
+            ),
+            child: DropdownMenu<String>(
+              width: double.infinity,
+              hintText: 'Select Duration',
+              enableSearch: false,
+              dropdownMenuEntries: [
+                DropdownMenuEntry(value: 'Part Time', label: 'Part Time'),
+                DropdownMenuEntry(value: 'Full Time', label: 'Full Time'),
+              ],
+              onSelected: (value) => setState(() => _durationController.text = value ?? ''),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRequirementsSection() {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF04305A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF04305A), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.list_alt, color: const Color(0xFFF2A13B), size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Requirements',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 12),
+          ..._controllers.asMap().entries.map((entry) {
+            final index = entry.key;
+            final controller = entry.value;
+            return Padding(
+              padding: EdgeInsets.only(bottom: 8),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF02243F),
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(color: const Color(0xFF04305A)),
+                      ),
+                      child: TextField(
+                        controller: controller,
+                        style: TextStyle(color: Colors.white),
+                        decoration: InputDecoration(
+                          hintText: 'Requirement ${index + 1}',
+                          hintStyle: TextStyle(color: const Color(0xFF7A8B9A)),
+                          border: InputBorder.none,
+                          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: 8),
+                  IconButton(
+                    onPressed: () {
+                      setState(() {
+                        _controllers.removeAt(index);
+                      });
+                    },
+                    icon: Icon(Icons.remove_circle_outline, color: Colors.red),
+                  ),
+                ],
+              ),
+            );
+          }),
+          Container(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              style: OutlinedButton.styleFrom(
+                foregroundColor: const Color(0xFFF55119),
+                side: BorderSide(color: const Color(0xFFF55119)),
+              ),
+              onPressed: _addRequirement,
+              icon: Icon(Icons.add),
+              label: Text('Add Requirement'),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCreateButton() {
+    return Container(
+      width: double.infinity,
+      height: 56,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [const Color(0xFFF55119), const Color(0xFFF27B12)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(12),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFF55119).withOpacity(0.3),
+            blurRadius: 12,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: TextButton(
+        onPressed: _createListing,
+        child: Text(
+          'Create Listing',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 16,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _createListing() async {
+    final title = _titleController.text.trim();
+    final position = _positionController.text.trim();
+    final location = _locationController.text.trim();
+    final duration = _durationController.text.trim();
+    final description = _descriptionController.text.trim();
+    final requirements = _controllers
+        .map((controller) => controller.text.trim())
+        .where((text) => text.isNotEmpty)
+        .join('\n');
+    final link = _linkController.text.trim();
+
+    // Validation
+    if (title.isEmpty) {
+      _showSnackBar("Title can't be empty.");
+      return;
+    }
+    if (position.isEmpty) {
+      _showSnackBar("Job position can't be empty.");
+      return;
+    }
+    if (location.isEmpty) {
+      _showSnackBar("Location can't be empty.");
+      return;
+    }
+    if (duration.isEmpty) {
+      _showSnackBar("Please pick a duration type.");
+      return;
+    }
+    if (link.isEmpty) {
+      _showSnackBar("LinkedIn link can't be empty.");
+      return;
+    }
+
+    final linkedInPostRegex = RegExp(
+      r'^https?:\/\/(?:www\.|m\.)?linkedin\.com\/(?:feed\/update\/urn:li:(?:activity|share):(\d+)|posts\/([^\/?]+)|company\/[^\/]+\/posts\/([^\/?]+))(?:[\/?].*)?$',
+      caseSensitive: false,
+    );
+
+    if (!linkedInPostRegex.hasMatch(link)) {
+      _showSnackBar("Must be a valid LinkedIn link.");
+      return;
+    }
+
+    try {
+      await Supabase.instance.client.from('listing').insert({
+        'company_id': companyDetails!['company_id'],
+        'title': title,
+        'position': position,
+        'location': location,
+        'duration': duration,
+        'description': description,
+        'requirements': requirements,
+        'link': link,
+      });
+      _showSnackBar("Successfully posted!", isSuccess: true);
+      _clearForm();
+      setState(() => focus = Focus.home);
+    } catch (e) {
+      _showSnackBar("Error: $e");
     }
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final collapsedHeight = 160.0;
-    final requirements = widget.listing['requirements']
-        .toString()
-        .split('\n')
-        .map((req) => req.replaceAll(RegExp(r'[\u00A0\t]'), '').trim())
-        .where((req) => req.isNotEmpty)
-        .toList();
+  void _clearForm() {
+    setState(() {
+      _controllers.clear();
+      _controllers.add(TextEditingController());
+      _titleController.clear();
+      _positionController.clear();
+      _locationController.clear();
+      _durationController.clear();
+      _descriptionController.clear();
+      _requirementsController.clear();
+      _linkController.clear();
+    });
+  }
 
-    return GestureDetector(
-      onTap: () => setState(() => isExpanded = !isExpanded),
-      child: Material(
-        color: Colors.white,
-        elevation: 5,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          constraints: BoxConstraints(
-            maxHeight: isExpanded ? double.infinity : collapsedHeight,
+  void _showSnackBar(String message, {bool isSuccess = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isSuccess ? const Color(0xFF04305A) : Colors.red,
+        duration: Duration(seconds: 2),
+      ),
+    );
+  }
+
+  Widget _buildSettingsPage(BuildContext context, double screenHeight, double screenWidth, bool isWide) {
+    return SingleChildScrollView(
+      padding: EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Account Settings',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+            ),
           ),
-          child: Stack(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    widget.listing['title'],
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 20,
-                      overflow: isExpanded ? null : TextOverflow.ellipsis,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text.rich(
-                    maxLines: isExpanded ? null : 1,
-                    TextSpan(
-                      style: TextStyle(
-                        overflow: isExpanded ? null : TextOverflow.ellipsis,
-                      ),
-                      children: [
-                        const TextSpan(
-                          text: 'Position: ',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        TextSpan(
-                          text: widget.listing['position'],
-                          style: TextStyle(
-                            fontWeight: FontWeight.normal,
-                            fontSize: 16,
-                            overflow: isExpanded ? null : TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text.rich(
-                    maxLines: isExpanded ? null : 1,
-                    TextSpan(
-                      style: TextStyle(
-                        overflow: isExpanded ? null : TextOverflow.ellipsis,
-                      ),
-                      children: [
-                        const TextSpan(
-                          text: 'Location: ',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        TextSpan(
-                          text: widget.listing['location'],
-                          style: TextStyle(
-                            fontWeight: FontWeight.normal,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text.rich(
-                    TextSpan(
-                      children: [
-                        const TextSpan(
-                          text: 'Duration: ',
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                          ),
-                        ),
-                        TextSpan(
-                          text: widget.listing['duration'],
-                          style: const TextStyle(
-                            fontWeight: FontWeight.normal,
-                            fontSize: 16,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  SizedBox(height: 20),
-                  if (isExpanded) ...[
-                    const SizedBox(height: 10),
-                    const Text(
-                      'Description',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    Text(
-                      widget.listing['description'].isNotEmpty
-                          ? widget.listing['description']
-                          : 'No description',
-                      style: const TextStyle(fontSize: 16),
-                    ),
-                    const SizedBox(height: 20),
-                    const Text(
-                      'Requirements',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                      ),
-                    ),
-                    requirements.isNotEmpty
-                        ? Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: requirements.map((req) {
-                              final trimmed = req.trim();
-                              if (trimmed.isEmpty) return SizedBox.shrink();
-                              return Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    '- ',
-                                    style: TextStyle(fontSize: 16),
-                                  ),
-                                  Expanded(
-                                    child: Text(
-                                      trimmed,
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                  ),
-                                ],
-                              );
-                            }).toList(),
-                          )
-                        : Text(
-                            'No requirements',
-                            style: const TextStyle(fontSize: 16),
-                          ),
-                    SizedBox(height: 20),
-                    Row(
-                      children: [
-                        Icon(Icons.link, color: widget.orange),
-                        GestureDetector(
-                          onTap: () {
-                            String link = widget.listing['link'];
-                            if (!link.startsWith('http://') &&
-                                !link.startsWith('https://')) {
-                              link = 'https://$link';
-                            }
-                            if (link != null && link.isNotEmpty) openLink(link);
-                          },
-                          child: Text(
-                            'LinkedIn',
-                            style: TextStyle(
-                              color: widget.orange,
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
-                              decorationColor: widget.orange,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.white,
-                            foregroundColor: widget.orange,
-                          ),
-                          onPressed: () {
-                            print(requirements);
-                            Navigator.push(
-                              context,
-                              PageRouteBuilder(
-                                pageBuilder: (_, __, ___) =>
-                                    EditListingPage(widget.listing),
-                                transitionDuration: Duration.zero,
-                              ),
-                            );
-                          },
-                          child: Text('Edit'),
-                        ),
-                        ElevatedButton(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: Colors.red,
-                            foregroundColor: Colors.white,
-                          ),
-                          onPressed: () {
-                            showDialog(
-                              context: context,
-                              builder: (BuildContext context) {
-                                return AlertDialog(
-                                  backgroundColor: Colors.white,
-                                  title: Text(
-                                    'Confirm',
-                                    style: TextStyle(color: widget.orange),
-                                  ),
-                                  content: const Text(
-                                    'Are you sure you want to delete this listing?',
-                                  ),
-                                  actions: <Widget>[
-                                    TextButton(
-                                      child: Text(
-                                        'Cancel',
-                                        style: TextStyle(color: widget.orange),
-                                      ),
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                    ),
-                                    TextButton(
-                                      style: TextButton.styleFrom(
-                                        backgroundColor: widget.orange,
-                                        foregroundColor: Colors.white,
-                                      ),
-                                      child: Text('Confirm'),
-                                      onPressed: () async {
-                                        try {
-                                          final delete = await Supabase
-                                              .instance
-                                              .client
-                                              .from('listing')
-                                              .delete()
-                                              .eq(
-                                                'listing_id',
-                                                widget.listing['listing_id'],
-                                              );
-                                          await widget.onRefresh();
-                                          Navigator.pop(context);
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(
-                                                "Successfully deleted.",
-                                              ),
-                                              duration: Duration(seconds: 2),
-                                            ),
-                                          );
-                                        } on AuthException catch (e) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            SnackBar(
-                                              content: Text(e.message),
-                                              duration: Duration(seconds: 2),
-                                            ),
-                                          );
-                                          return;
-                                        }
-                                      },
-                                    ),
-                                  ],
-                                );
-                              },
-                            );
-                          },
-                          child: Text('Delete'),
-                        ),
-                      ],
-                    ),
-                  ],
-                ],
+          SizedBox(height: 20),
+          _buildSettingsSection(
+            'Login Information',
+            Icons.lock_outline,
+            [
+              _buildSettingsField(
+                'Email',
+                _emailController,
+                isEditingEmail,
+                () => setState(() => isEditingEmail = !isEditingEmail),
+                emailChanged,
+                _updateLoginInfo,
               ),
-              Positioned(
-                right: 0,
-                child: Center(
-                  child: Container(
-                    color: Colors.transparent,
-                    child: IconButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          PageRouteBuilder(
-                            pageBuilder: (_, __, ___) =>
-                                ViewApplicantsPage(widget.listing),
-                            transitionDuration: Duration.zero,
-                          ),
-                        );
-                      },
-                      icon: Icon(Icons.group, color: widget.orange),
-                    ),
-                  ),
-                ),
+              _buildPasswordField(
+                'New Password',
+                _passwordController,
+                isEditingPassword,
+                () => setState(() => isEditingPassword = !isEditingPassword),
+                passwordChanged,
+                _updateLoginInfo,
               ),
-              if (!isExpanded)
-                Positioned(
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  child: Center(
-                    child: Container(
-                      color: Colors.transparent,
-                      child: const Text(
-                        '...',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black54,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
             ],
           ),
-        ),
+          SizedBox(height: 20),
+          _buildSettingsSection(
+            'Company Information',
+            Icons.business_outlined,
+            [
+              _buildSettingsField(
+                'Company Name',
+                _nameController,
+                isEditingName,
+                () => setState(() => isEditingName = !isEditingName),
+                nameChanged,
+                _updateCompanyInfo,
+              ),
+              _buildSettingsField(
+                'Industry',
+                _industryController,
+                isEditingIndustry,
+                () => setState(() => isEditingIndustry = !isEditingIndustry),
+                industryChanged,
+                _updateCompanyInfo,
+              ),
+            ],
+          ),
+          SizedBox(height: 20),
+          _buildSettingsSection(
+            'Contact Information',
+            Icons.contact_phone_outlined,
+            [
+              _buildSettingsField(
+                'Contact Email',
+                _contactController,
+                isEditingContact,
+                () => setState(() => isEditingContact = !isEditingContact),
+                contactChanged,
+                _updateContactInfo,
+              ),
+              _buildSettingsField(
+                'Contact Number',
+                _numberController,
+                isEditingNumber,
+                () => setState(() => isEditingNumber = !isEditingNumber),
+                numberChanged,
+                _updateContactInfo,
+              ),
+            ],
+          ),
+          SizedBox(height: 30),
+          Container(
+            width: double.infinity,
+            height: 56,
+            decoration: BoxDecoration(
+              color: Colors.red,
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: TextButton(
+              onPressed: () => _showLogoutDialog(),
+              child: Text(
+                'Logout',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
+    );
+  }
+
+  Widget _buildSettingsSection(String title, IconData icon, List<Widget> children) {
+    return Container(
+      padding: EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: const Color(0xFF04305A),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFF04305A), width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, color: const Color(0xFFF2A13B), size: 20),
+              SizedBox(width: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
+          ),
+          SizedBox(height: 16),
+          ...children,
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSettingsField(
+    String label,
+    TextEditingController controller,
+    bool isEditing,
+    VoidCallback onEditToggle,
+    bool hasChanges,
+    VoidCallback onUpdate,
+  ) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller,
+              enabled: isEditing,
+              style: TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: label,
+                labelStyle: TextStyle(color: const Color(0xFFB8C5D1)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: const Color(0xFF04305A)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: const Color(0xFF04305A)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: const Color(0xFFF55119)),
+                ),
+                filled: true,
+                fillColor: const Color(0xFF02243F),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              ),
+            ),
+          ),
+          SizedBox(width: 8),
+          IconButton(
+            onPressed: onEditToggle,
+            icon: Icon(
+              isEditing ? Icons.check : Icons.edit,
+              color: isEditing ? const Color(0xFFF55119) : const Color(0xFFB8C5D1),
+            ),
+          ),
+          if (isEditing && hasChanges)
+            IconButton(
+              onPressed: onUpdate,
+              icon: Icon(
+                Icons.save,
+                color: const Color(0xFFF55119),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPasswordField(
+    String label,
+    TextEditingController controller,
+    bool isEditing,
+    VoidCallback onEditToggle,
+    bool hasChanges,
+    VoidCallback onUpdate,
+  ) {
+    return Padding(
+      padding: EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Expanded(
+            child: TextField(
+              controller: controller,
+              enabled: isEditing,
+              obscureText: !isPasswordPlain,
+              style: TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                labelText: label,
+                labelStyle: TextStyle(color: const Color(0xFFB8C5D1)),
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: const Color(0xFF04305A)),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: const Color(0xFF04305A)),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(color: const Color(0xFFF55119)),
+                ),
+                filled: true,
+                fillColor: const Color(0xFF02243F),
+                contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                suffixIcon: isEditing
+                    ? IconButton(
+                        onPressed: () => setState(() => isPasswordPlain = !isPasswordPlain),
+                        icon: Icon(
+                          isPasswordPlain ? Icons.visibility_off : Icons.visibility,
+                          color: const Color(0xFFF55119),
+                        ),
+                      )
+                    : null,
+              ),
+            ),
+          ),
+          SizedBox(width: 8),
+          IconButton(
+            onPressed: onEditToggle,
+            icon: Icon(
+              isEditing ? Icons.check : Icons.edit,
+              color: isEditing ? const Color(0xFFF55119) : const Color(0xFFB8C5D1),
+            ),
+          ),
+          if (isEditing && hasChanges)
+            IconButton(
+              onPressed: onUpdate,
+              icon: Icon(
+                Icons.save,
+                color: const Color(0xFFF55119),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _updateLoginInfo() async {
+    final email = _emailController.text.trim();
+    final password = _passwordController.text.trim();
+
+    if (email.isEmpty) {
+      _showSnackBar("Email can't be empty.");
+      return;
+    }
+
+    final user = Supabase.instance.client.auth.currentUser;
+    if (user != null) {
+      try {
+        await Supabase.instance.client.auth.updateUser(
+          UserAttributes(
+            email: email,
+            password: password.isEmpty ? null : password,
+          ),
+        );
+        _showSnackBar('A confirmation email has been sent to $email. Confirm to change your email.', isSuccess: true);
+        setState(() {
+          isEditingEmail = false;
+          isEditingPassword = false;
+        });
+      } catch (e) {
+        _showSnackBar("Error: $e");
+      }
+    }
+  }
+
+  Future<void> _updateCompanyInfo() async {
+    final name = _nameController.text.trim();
+    final industry = _industryController.text.trim();
+
+    if (name.isEmpty) {
+      _showSnackBar("Company Name can't be empty.");
+      return;
+    }
+    if (industry.isEmpty) {
+      _showSnackBar("Industry can't be empty.");
+      return;
+    }
+
+    final user = Supabase.instance.client.auth.currentUser;
+    final usersResponse = await Supabase.instance.client
+        .from('users')
+        .select('user_id')
+        .eq('auth_id', user!.id)
+        .single();
+    final userId = usersResponse['user_id'];
+
+    try {
+      await Supabase.instance.client
+          .from('company')
+          .update({
+            'name': name,
+            'industry': industry,
+          })
+          .eq('user_id', userId);
+      _showSnackBar('Successfully updated.', isSuccess: true);
+      setState(() {
+        isEditingName = false;
+        isEditingIndustry = false;
+      });
+    } catch (e) {
+      _showSnackBar("Error: $e");
+    }
+  }
+
+  Future<void> _updateContactInfo() async {
+    final contact = _contactController.text.trim();
+    final number = _numberController.text.replaceAll(' ', '');
+
+    if (contact.isEmpty) {
+      _showSnackBar("Contact Email can't be empty.");
+      return;
+    }
+    if (number.isEmpty) {
+      _showSnackBar("Contact Number can't be empty.");
+      return;
+    }
+
+    final user = Supabase.instance.client.auth.currentUser;
+    final usersResponse = await Supabase.instance.client
+        .from('users')
+        .select('user_id')
+        .eq('auth_id', user!.id)
+        .single();
+    final userId = usersResponse['user_id'];
+
+    try {
+      await Supabase.instance.client
+          .from('company')
+          .update({
+            'contact_email': contact,
+            'contact_number': number,
+          })
+          .eq('user_id', userId);
+      _showSnackBar('Successfully updated.', isSuccess: true);
+      setState(() {
+        isEditingContact = false;
+        isEditingNumber = false;
+      });
+    } catch (e) {
+      _showSnackBar("Error: $e");
+    }
+  }
+
+  void _showLogoutDialog() {
+    showDialog(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          backgroundColor: const Color(0xFF02243F),
+          title: Text('Confirm Logout', style: TextStyle(color: Colors.white)),
+          content: Text('Are you sure you want to log out?', style: TextStyle(color: const Color(0xFFB8C5D1))),
+          actions: <Widget>[
+            TextButton(
+              child: Text('Cancel', style: TextStyle(color: const Color(0xFFB8C5D1))),
+              onPressed: () => Navigator.of(context).pop(),
+            ),
+            TextButton(
+              style: TextButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: Text('Logout'),
+              onPressed: () async {
+                try {
+                  await Supabase.instance.client.auth.signOut();
+                  Navigator.of(context).pushAndRemoveUntil(
+                    PageRouteBuilder(
+                      pageBuilder: (_, __, ___) => LoginPage(),
+                      transitionDuration: Duration.zero,
+                    ),
+                    (route) => false,
+                  );
+                } catch (e) {
+                  _showSnackBar('Failed to log out: $e');
+                }
+              },
+            ),
+          ],
+        );
+      },
     );
   }
 }
 
-Widget _addPage(
-  BuildContext context,
-  double screenHeight,
-  double screenWidth,
-  orange,
-  formKey,
-  bool isWide,
-  bool isVerified,
-  titleController,
-  positionController,
-  locationController,
-  durationController,
-  descriptionController,
-  requirementsController,
-  linkController,
-  void Function(dynamic) setDuration,
-  controllers,
-  VoidCallback addRequirement,
-  VoidCallback clearControllers,
-  VoidCallback backHome,
-  companyId,
-) {
-  return isVerified
-      ? SingleChildScrollView(
-          padding: EdgeInsets.symmetric(vertical: screenHeight / 100),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              SizedBox(height: 10),
-              Text(
-                'Create Listing',
-                style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-              ),
-              SizedBox(height: 20),
-              Form(
-                key: formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  children: [
-                    Container(
-                      height: isWide ? screenHeight / 8 : screenHeight / 16,
-                      child: TextFormField(
-                        controller: titleController,
-                        cursorColor: Colors.black,
-                        decoration: InputDecoration(
-                          labelText: 'Title *',
-                          hintStyle: TextStyle(color: Colors.grey[400]),
-                          border: _inputBorder(),
-                          enabledBorder: _inputBorder(),
-                          focusedBorder: _inputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                        ),
-                        style: TextStyle(
-                          fontWeight: FontWeight.bold,
-                          fontSize: 20,
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Container(
-                      height: isWide ? screenHeight / 10 : screenHeight / 20,
-                      child: TextFormField(
-                        controller: positionController,
-                        cursorColor: Colors.black,
-                        decoration: InputDecoration(
-                          hintText: 'Job Position *',
-                          hintStyle: TextStyle(color: Colors.grey[400]),
-                          border: _inputBorder(),
-                          enabledBorder: _inputBorder(),
-                          focusedBorder: _inputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                        ),
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
-                    SizedBox(height: 5),
-                    Container(
-                      height: isWide ? screenHeight / 10 : screenHeight / 20,
-                      child: TextFormField(
-                        controller: locationController,
-                        cursorColor: Colors.black,
-                        decoration: InputDecoration(
-                          hintText: 'Job Location *',
-                          hintStyle: TextStyle(color: Colors.grey[400]),
-                          border: _inputBorder(),
-                          enabledBorder: _inputBorder(),
-                          focusedBorder: _inputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                        ),
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      children: [
-                        DropdownMenu<String>(
-                          width: screenWidth * 0.8,
-                          hintText: 'Duration Type *',
-                          enableSearch: false,
-                          dropdownMenuEntries: [
-                            DropdownMenuEntry(
-                              value: 'Part Time',
-                              label: 'Part Time',
-                            ),
-                            DropdownMenuEntry(
-                              value: 'Full Time',
-                              label: 'Full Time',
-                            ),
-                          ],
-                          onSelected: (value) {
-                            setDuration(value);
-                          },
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    Container(
-                      child: TextFormField(
-                        minLines: 5,
-                        maxLines: 5,
-                        controller: descriptionController,
-                        cursorColor: Colors.black,
-                        decoration: InputDecoration(
-                          hintText: 'Listing Description',
-                          hintStyle: TextStyle(color: Colors.grey[400]),
-                          border: _inputBorder(),
-                          enabledBorder: _inputBorder(),
-                          focusedBorder: _inputBorder(),
-                          contentPadding: EdgeInsets.all(10),
-                        ),
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Text(
-                      'Requirements',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Column(
-                      spacing: 10,
-                      children: [
-                        ...controllers.asMap().entries.map((entry) {
-                          final index = entry.key;
-                          final controller = entry.value;
-
-                          return Row(
-                            children: [
-                              Expanded(
-                                child: Container(
-                                  height: isWide
-                                      ? screenHeight / 10
-                                      : screenHeight / 20,
-                                  child: TextFormField(
-                                    controller: controller,
-                                    decoration: InputDecoration(
-                                      hintText: 'Requirement',
-                                      hintStyle: TextStyle(
-                                        color: Colors.grey[400],
-                                      ),
-                                      border: _inputBorder(),
-                                      enabledBorder: _inputBorder(),
-                                      focusedBorder: _inputBorder(),
-                                      contentPadding: EdgeInsets.symmetric(
-                                        horizontal: 10,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              IconButton(
-                                icon: const Icon(
-                                  Icons.close,
-                                  color: Colors.grey,
-                                ),
-                                onPressed: () {
-                                  controllers.removeAt(index);
-                                  (context as Element).markNeedsBuild();
-                                },
-                              ),
-                            ],
-                          );
-                        }),
-                        Container(
-                          width: double.infinity,
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              elevation: 5,
-                              backgroundColor: Colors.white,
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                            ),
-                            onPressed: addRequirement,
-                            child: Icon(Icons.add, color: orange),
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: 10),
-                    Container(
-                      height: isWide ? screenHeight / 10 : screenHeight / 20,
-                      child: TextFormField(
-                        controller: linkController,
-                        cursorColor: Colors.black,
-                        decoration: InputDecoration(
-                          hintText: 'LinkedIn Link *',
-                          suffixIcon: IconButton(
-                            style: IconButton.styleFrom(
-                              overlayColor: Colors.transparent,
-                            ),
-                            onPressed: () {
-                              linkController.text = '';
-                            },
-                            icon: Icon(Icons.close),
-                          ),
-                          hintStyle: TextStyle(color: Colors.grey[400]),
-                          border: _inputBorder(),
-                          enabledBorder: _inputBorder(),
-                          focusedBorder: _inputBorder(),
-                          contentPadding: EdgeInsets.symmetric(horizontal: 10),
-                        ),
-                        style: TextStyle(fontSize: 16),
-                      ),
-                    ),
-                    SizedBox(height: 10),
-                    Container(
-                      width: double.infinity,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: orange,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(100),
-                          ),
-                        ),
-                        onPressed: () async {
-                          final title = titleController.text.trim();
-                          final position = positionController.text.trim();
-                          final location = locationController.text.trim();
-                          final duration = durationController.text.trim();
-                          final description = descriptionController.text.trim();
-                          final requirements = controllers
-                              .map((controller) => controller.text.trim())
-                              .where((text) => true && text.isNotEmpty)
-                              .join('\n');
-                          final link = linkController.text.trim();
-
-                          final linkedInPostRegex = RegExp(
-                            r'^https?:\/\/(?:www\.|m\.)?linkedin\.com\/(?:feed\/update\/urn:li:(?:activity|share):(\d+)|posts\/([^\/?]+)|company\/[^\/]+\/posts\/([^\/?]+))(?:[\/?].*)?$',
-                            caseSensitive: false,
-                          );
-
-                          if (title.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Title can't be empty."),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                            return;
-                          }
-
-                          if (position.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Job position can't be empty."),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                            return;
-                          }
-
-                          if (location.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Location can't be empty."),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                            return;
-                          }
-
-                          if (duration.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Please pick a duration type."),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                            return;
-                          }
-                          if (link.isEmpty) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("LinkedIn link can't be empty."),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                            return;
-                          }
-
-                          if (!linkedInPostRegex.hasMatch(link)) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Must be a valid LinkedIn link."),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                            return;
-                          }
-
-                          try {
-                            final addListing = await Supabase.instance.client
-                                .from('listing')
-                                .insert({
-                                  'company_id': companyId,
-                                  'title': title,
-                                  'position': position,
-                                  'location': location,
-                                  'duration': duration,
-                                  'description': description,
-                                  'requirements': requirements,
-                                  'link': link,
-                                });
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text("Successfully posted!"),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                            clearControllers();
-                          } on AuthException catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(e.message),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          }
-                        },
-                        child: Text(
-                          'Create',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            color: Colors.white,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-                    SizedBox(height: 20),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        )
-      : Center(
-          child: Text(
-            'You are currently unverified. Contact a coordinator or administrator to help you get verified.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
-          ),
-        );
-}
-
-Widget _settingsPage(
-  BuildContext context,
-  double screenHeight,
-  double screenWidth,
-  orange,
-  bool isWide,
-  emailController,
-  passwordController,
-  nameController,
-  industryController,
-  contactController,
-  numberController,
-  loginFormKey,
-  companyFormKey,
-  contactFormKey,
-  bool isEditingEmail,
-  bool isEditingPassword,
-  bool isEditingName,
-  bool isEditingIndustry,
-  bool isEditingContact,
-  bool isEditingNumber,
-  bool isPasswordPlain,
-  bool emailChanged,
-  bool passwordChanged,
-  bool nameChanged,
-  bool industryChanged,
-  bool contactChanged,
-  bool numberChanged,
-  VoidCallback editEmailChange,
-  VoidCallback editPasswordChange,
-  VoidCallback editNameChange,
-  VoidCallback editIndustryChange,
-  VoidCallback editContactChange,
-  VoidCallback editNumberChange,
-  VoidCallback passwordVisibilityChange,
-) {
-  return SingleChildScrollView(
-    padding: EdgeInsets.symmetric(vertical: screenHeight / 50),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(height: 10),
-        Text(
-          'Edit Profile',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        SizedBox(height: 20),
-        Material(
-          color: Colors.white,
-          elevation: 5,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsetsGeometry.all(16),
-            child: Form(
-              key: loginFormKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Login Information',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: isWide
-                              ? screenHeight / 10
-                              : screenHeight / 20,
-                          child: TextFormField(
-                            controller: emailController,
-                            enabled: isEditingEmail,
-                            cursorColor: Colors.black,
-                            decoration: InputDecoration(
-                              labelText: 'Email',
-                              floatingLabelStyle: TextStyle(
-                                color: isEditingEmail ? orange : null,
-                              ),
-                              border: _inputBorder(),
-                              enabledBorder: _inputBorder(),
-                              focusedBorder: _inputBorder(),
-                              contentPadding: EdgeInsets.all(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        splashColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onPressed: () => editEmailChange(),
-                        icon: Icon(
-                          isEditingEmail ? Icons.edit_off : Icons.edit,
-                          color: orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: isWide
-                              ? screenHeight / 10
-                              : screenHeight / 20,
-                          child: TextFormField(
-                            controller: passwordController,
-                            obscureText: !isPasswordPlain,
-                            enabled: isEditingPassword,
-                            cursorColor: Colors.black,
-                            decoration: InputDecoration(
-                              labelText: 'New Password',
-                              floatingLabelStyle: TextStyle(color: orange),
-                              border: _inputBorder(),
-                              enabledBorder: _inputBorder(),
-                              focusedBorder: _inputBorder(),
-                              contentPadding: EdgeInsets.all(10),
-                              suffixIcon: IconButton(
-                                splashColor: Colors.transparent,
-                                highlightColor: Colors.transparent,
-                                onPressed: passwordVisibilityChange,
-                                icon: Icon(
-                                  isPasswordPlain
-                                      ? Icons.visibility_off
-                                      : Icons.visibility,
-                                  color: isEditingPassword
-                                      ? orange
-                                      : Colors.grey,
-                                  size: 20,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        splashColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onPressed: () => editPasswordChange(),
-                        icon: Icon(
-                          isEditingPassword ? Icons.edit_off : Icons.edit,
-                          color: orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  Center(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: orange,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                      ),
-                      onPressed:
-                          ((isEditingEmail && emailChanged) ||
-                              (isEditingPassword && passwordChanged))
-                          ? () async {
-                              bool valid = false;
-
-                              final email = emailController.text.trim();
-                              final password = passwordController.text.trim();
-
-                              if (email.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text("Email can't be empty."),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-
-                              final user =
-                                  Supabase.instance.client.auth.currentUser;
-
-                              if (user != null) {
-                                try {
-                                  final emailResponse = await Supabase
-                                      .instance
-                                      .client
-                                      .auth
-                                      .updateUser(
-                                        UserAttributes(
-                                          email: email,
-                                          password: password.isEmpty
-                                              ? null
-                                              : password,
-                                        ),
-                                      );
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(
-                                        'A confirmation email has been sent to $email. Confirm to change your email.',
-                                      ),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                  valid = true;
-                                } on AuthException catch (e) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(e.message),
-                                      duration: Duration(seconds: 2),
-                                    ),
-                                  );
-                                }
-                              }
-                              if (valid) {
-                                if (isEditingEmail) editEmailChange();
-                                if (isEditingPassword) editPasswordChange();
-                              }
-                            }
-                          : null,
-                      child: Text(
-                        'Update',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          color:
-                              ((isEditingEmail && emailChanged) ||
-                                  (isEditingPassword && passwordChanged))
-                              ? Colors.black
-                              : Colors.grey[500],
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: 20),
-        Material(
-          color: Colors.white,
-          elevation: 5,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsetsGeometry.all(16),
-            child: Form(
-              key: companyFormKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Company Information',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: isWide
-                              ? screenHeight / 10
-                              : screenHeight / 20,
-                          child: TextFormField(
-                            controller: nameController,
-                            enabled: isEditingName,
-                            cursorColor: Colors.black,
-                            decoration: InputDecoration(
-                              labelText: 'Company Name',
-                              floatingLabelStyle: TextStyle(
-                                color: isEditingName ? orange : null,
-                              ),
-                              border: _inputBorder(),
-                              enabledBorder: _inputBorder(),
-                              focusedBorder: _inputBorder(),
-                              contentPadding: EdgeInsets.all(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        splashColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onPressed: () => editNameChange(),
-                        icon: Icon(
-                          isEditingName ? Icons.edit_off : Icons.edit,
-                          color: orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: isWide
-                              ? screenHeight / 10
-                              : screenHeight / 20,
-                          child: TextFormField(
-                            controller: industryController,
-                            enabled: isEditingIndustry,
-                            cursorColor: Colors.black,
-                            decoration: InputDecoration(
-                              labelText: 'Type of Industry',
-                              floatingLabelStyle: TextStyle(
-                                color: isEditingIndustry ? orange : null,
-                              ),
-                              border: _inputBorder(),
-                              enabledBorder: _inputBorder(),
-                              focusedBorder: _inputBorder(),
-                              contentPadding: EdgeInsets.all(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        splashColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onPressed: () => editIndustryChange(),
-                        icon: Icon(
-                          isEditingIndustry ? Icons.edit_off : Icons.edit,
-                          color: orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  Center(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: orange,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                      ),
-                      onPressed:
-                          ((isEditingName && nameChanged) ||
-                              (isEditingIndustry && industryChanged))
-                          ? () async {
-                              final name = nameController.text.trim();
-                              final industry = industryController.text.trim();
-
-                              if (name.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      "Company Name can't be empty.",
-                                    ),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-
-                              if (industry.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      "Type of Industry can't be empty.",
-                                    ),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-
-                              final user =
-                                  Supabase.instance.client.auth.currentUser;
-
-                              final usersResponse = await Supabase
-                                  .instance
-                                  .client
-                                  .from('users')
-                                  .select('user_id')
-                                  .eq('auth_id', user!.id)
-                                  .single();
-
-                              final userId = usersResponse['user_id'];
-
-                              try {
-                                final update = await Supabase.instance.client
-                                    .from('company')
-                                    .update({
-                                      'name': name,
-                                      'industry': industry,
-                                    })
-                                    .eq('user_id', userId);
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Successfully updated.'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              } on AuthException catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(e.message),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            }
-                          : null,
-                      child: Text(
-                        'Update',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          color:
-                              ((isEditingName && nameChanged) ||
-                                  (isEditingIndustry && industryChanged))
-                              ? Colors.black
-                              : Colors.grey[500],
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: 20),
-        Material(
-          color: Colors.white,
-          elevation: 5,
-          borderRadius: BorderRadius.circular(12),
-          child: Padding(
-            padding: const EdgeInsetsGeometry.all(16),
-            child: Form(
-              key: contactFormKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'Contact Information',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: isWide
-                              ? screenHeight / 10
-                              : screenHeight / 20,
-                          child: TextFormField(
-                            controller: contactController,
-                            enabled: isEditingContact,
-                            cursorColor: Colors.black,
-                            decoration: InputDecoration(
-                              labelText: 'Contact Email',
-                              floatingLabelStyle: TextStyle(
-                                color: isEditingContact ? orange : null,
-                              ),
-                              border: _inputBorder(),
-                              enabledBorder: _inputBorder(),
-                              focusedBorder: _inputBorder(),
-                              contentPadding: EdgeInsets.all(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        splashColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onPressed: () => editContactChange(),
-                        icon: Icon(
-                          isEditingContact ? Icons.edit_off : Icons.edit,
-                          color: orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 10),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Container(
-                          height: isWide
-                              ? screenHeight / 10
-                              : screenHeight / 20,
-                          child: TextFormField(
-                            controller: numberController,
-                            keyboardType: TextInputType.number,
-                            inputFormatters: [NumberFormatter()],
-                            enabled: isEditingNumber,
-                            cursorColor: Colors.black,
-                            decoration: InputDecoration(
-                              labelText: 'Contact Number',
-                              floatingLabelStyle: TextStyle(
-                                color: isEditingNumber ? orange : null,
-                              ),
-                              border: _inputBorder(),
-                              enabledBorder: _inputBorder(),
-                              focusedBorder: _inputBorder(),
-                              contentPadding: EdgeInsets.all(10),
-                            ),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        splashColor: Colors.transparent,
-                        highlightColor: Colors.transparent,
-                        onPressed: () => editNumberChange(),
-                        icon: Icon(
-                          isEditingNumber ? Icons.edit_off : Icons.edit,
-                          color: orange,
-                        ),
-                      ),
-                    ],
-                  ),
-                  SizedBox(height: 20),
-                  Center(
-                    child: ElevatedButton(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: orange,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(100),
-                        ),
-                      ),
-                      onPressed:
-                          ((isEditingContact && contactChanged) ||
-                              (isEditingNumber && numberChanged))
-                          ? () async {
-                              final contact = nameController.text.trim();
-                              final number = numberController.text.replaceAll(
-                                ' ',
-                                '',
-                              );
-
-                              if (contact.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      "Contact Email Adress can't be empty.",
-                                    ),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-
-                              if (number.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      "Contact Number can't be empty.",
-                                    ),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-
-                              final user =
-                                  Supabase.instance.client.auth.currentUser;
-
-                              final usersResponse = await Supabase
-                                  .instance
-                                  .client
-                                  .from('users')
-                                  .select('user_id')
-                                  .eq('auth_id', user!.id)
-                                  .single();
-
-                              final userId = usersResponse['user_id'];
-
-                              try {
-                                final update = await Supabase.instance.client
-                                    .from('company')
-                                    .update({
-                                      'contact_email': contact,
-                                      'contact_number': number,
-                                    })
-                                    .eq('user_id', userId);
-
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text('Successfully updated.'),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              } on AuthException catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(e.message),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            }
-                          : null,
-                      child: Text(
-                        'Update',
-                        style: TextStyle(
-                          fontFamily: 'Inter',
-                          color:
-                              ((isEditingContact && contactChanged) ||
-                                  (isEditingNumber && numberChanged))
-                              ? Colors.black
-                              : Colors.grey[500],
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-        SizedBox(height: 20),
-        Material(
-          color: orange,
-          elevation: 5,
-          borderRadius: BorderRadius.circular(12),
-          child: InkWell(
-            borderRadius: BorderRadius.circular(12),
-            onTap: () {
-              showDialog(
-                context: context,
-                builder: (BuildContext context) {
-                  return AlertDialog(
-                    backgroundColor: Colors.white,
-                    title: Text('Confirm', style: TextStyle(color: orange)),
-                    content: const Text('Are you sure you want to log out?'),
-                    actions: <Widget>[
-                      TextButton(
-                        child: Text('Cancel', style: TextStyle(color: orange)),
-                        onPressed: () {
-                          Navigator.of(context).pop();
-                        },
-                      ),
-                      TextButton(
-                        style: TextButton.styleFrom(
-                          backgroundColor: orange,
-                          foregroundColor: Colors.white,
-                        ),
-                        child: Text('Confirm'),
-                        onPressed: () async {
-                          try {
-                            await Supabase.instance.client.auth.signOut();
-
-                            Navigator.of(context).pushAndRemoveUntil(
-                              PageRouteBuilder(
-                                pageBuilder: (_, __, ___) => LoginPage(),
-                                transitionDuration: Duration.zero,
-                              ),
-                              (route) => false,
-                            );
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('Failed to log out: $e'),
-                                duration: Duration(seconds: 2),
-                              ),
-                            );
-                          }
-                        },
-                      ),
-                    ],
-                  );
-                },
-              );
-            },
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Center(
-                child: Text(
-                  'Log out',
-                  style: TextStyle(
-                    fontFamily: 'Inter',
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.black,
-                  ),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
-}
-
-OutlineInputBorder _inputBorder() => const OutlineInputBorder(
-  borderSide: BorderSide(color: Colors.black),
-  borderRadius: BorderRadius.all(Radius.circular(12.5)),
-);
