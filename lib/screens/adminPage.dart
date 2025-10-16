@@ -1141,7 +1141,7 @@ Widget _settingsPage(
                     fontFamily: 'Inter',
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.white,
+                    color: Colors.black,
                   ),
                 ),
               ),

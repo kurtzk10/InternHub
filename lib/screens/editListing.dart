@@ -247,7 +247,6 @@ Widget editListing(
                   decoration: InputDecoration(
                     labelText: 'Listing Description',
                     floatingLabelStyle: TextStyle(color: Colors.black),
-                    alignLabelWithHint: true,
                     border: _inputBorder(),
                     enabledBorder: _inputBorder(),
                     focusedBorder: _inputBorder(),
