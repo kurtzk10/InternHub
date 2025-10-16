@@ -791,7 +791,7 @@ class _ListingCardState extends State<ListingCard> {
                           context,
                           PageRouteBuilder(
                             pageBuilder: (_, __, ___) =>
-                                ViewApplicantsPage(widget.listing),
+                                ViewApplicantsPage(widget.listing, false),
                             transitionDuration: Duration.zero,
                           ),
                         );

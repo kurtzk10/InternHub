@@ -6,26 +6,33 @@ import 'package:internhub/emailService.dart';
 
 class ViewApplicantsPage extends StatefulWidget {
   final Map<String, dynamic>? listing;
+  final isAdmin;
 
-  const ViewApplicantsPage(this.listing, {super.key});
+  const ViewApplicantsPage(this.listing, this.isAdmin, {super.key});
 
   @override
-  _ViewApplicantsPageState createState() => _ViewApplicantsPageState();
+  ViewApplicantsPageState createState() => ViewApplicantsPageState();
 }
 
-class _ViewApplicantsPageState extends State<ViewApplicantsPage> {
+class ViewApplicantsPageState extends State<ViewApplicantsPage> {
   late Future<List<Map<String, dynamic>>> _applicationsFuture;
 
   Future<List<Map<String, dynamic>>> refreshApplications() async {
     final listingId = widget.listing!['listing_id'];
 
+    if (widget.isAdmin) {
+      final appResponse = await Supabase.instance.client
+          .from('application')
+          .select('*, students(*)')
+          .eq('listing_id', listingId);
+      return (appResponse as List).cast<Map<String, dynamic>>();
+    }
     final appResponse = await Supabase.instance.client
         .from('application')
         .select('*, students(*)')
         .eq('listing_id', listingId)
         .neq('status', 'Rejected')
         .neq('status', 'Accepted');
-
     return (appResponse as List).cast<Map<String, dynamic>>();
   }
 
@@ -141,6 +148,7 @@ class _ViewApplicantsPageState extends State<ViewApplicantsPage> {
                             () async => setState(() {
                               _applicationsFuture = refreshApplications();
                             }),
+                            widget.isAdmin,
                           ),
                         );
                       }).toList(),
@@ -160,11 +168,13 @@ class ApplicationCard extends StatefulWidget {
   final Map<String, dynamic> application;
   final Color orange;
   final Future<void> Function() onRefresh;
+  final isAdmin;
 
   const ApplicationCard(
     this.application,
     this.orange,
-    this.onRefresh, {
+    this.onRefresh,
+    this.isAdmin, {
     super.key,
   });
 
@@ -206,211 +216,215 @@ class ApplicationCardState extends State<ApplicationCard> {
     final student = widget.application['students'];
     final status = widget.application['status'];
 
-    if (status != 'Rejected' && status != 'Accepted') {
-      return GestureDetector(
-        onTap: () => setState(() => isExpanded = !isExpanded),
-        child: Material(
-          color: Colors.white,
-          elevation: 5,
-          borderRadius: BorderRadius.circular(12),
-          child: Container(
-            padding: const EdgeInsets.all(16),
-            constraints: BoxConstraints(
-              minHeight: collapsedHeight,
-              maxHeight: isExpanded ? double.infinity : collapsedHeight,
+    return GestureDetector(
+      onTap: widget.isAdmin
+          ? () {}
+          : () => setState(
+              () => isExpanded = !isExpanded,
             ),
-            child: Stack(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      student['name'],
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 20,
-                      ),
+      child: Material(
+        color: Colors.white,
+        elevation: 5,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          constraints: BoxConstraints(
+            minHeight: collapsedHeight,
+            maxHeight: isExpanded ? double.infinity : collapsedHeight,
+          ),
+          child: Stack(
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    student['name'],
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 20,
                     ),
-                    Row(
-                      children: [
-                        Icon(Icons.link, color: widget.orange),
-                        GestureDetector(
-                          onTap: () {
-                            String link = student['resume_url'];
-                            if (!link.startsWith('http://') &&
-                                !link.startsWith('https://')) {
-                              link = 'https://$link';
-                            }
-                            openLink(link);
-                          },
-                          child: Text(
-                            'LinkedIn',
-                            style: TextStyle(
-                              color: widget.orange,
-                              fontWeight: FontWeight.bold,
-                              decoration: TextDecoration.underline,
-                              decorationColor: widget.orange,
-                            ),
+                  ),
+                  Row(
+                    children: [
+                      Icon(Icons.link, color: widget.orange),
+                      GestureDetector(
+                        onTap: () {
+                          String link = student['resume_url'];
+                          if (!link.startsWith('http://') &&
+                              !link.startsWith('https://')) {
+                            link = 'https://$link';
+                          }
+                          openLink(link);
+                        },
+                        child: Text(
+                          'LinkedIn',
+                          style: TextStyle(
+                            color: widget.orange,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                            decorationColor: widget.orange,
                           ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    '${getYearLevel(student['yr_level'])} ${student['course']} Student',
+                  ),
+                  widget.isAdmin ? SizedBox(height: 10) : SizedBox.shrink(),
+                  widget.isAdmin
+                      ? Text(
+                          status,
+                          style: TextStyle(fontSize: 16, fontStyle: FontStyle.italic),
+                        )
+                      : SizedBox.shrink(),
+                  SizedBox(height: isExpanded ? 10 : 0),
+                  if (isExpanded && !widget.isAdmin)
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        TextButton(
+                          onPressed: () async {
+                            try {
+                              final update = await Supabase.instance.client
+                                  .from('application')
+                                  .update({'status': 'Rejected'})
+                                  .eq(
+                                    'application_id',
+                                    widget.application['application_id'],
+                                  );
+                              await widget.onRefresh();
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text('Rejected ${student['name']}.'),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            } on AuthException catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(e.message),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: Colors.red,
+                          ),
+                          child: Text('Reject'),
+                        ),
+                        TextButton(
+                          onPressed: () async {
+                            try {
+                              showDialog(
+                                context: context,
+                                barrierDismissible: false,
+                                builder: (_) => Center(
+                                  child: CircularProgressIndicator(
+                                    color: widget.orange,
+                                  ),
+                                ),
+                              );
+                              final update = await Supabase.instance.client
+                                  .from('application')
+                                  .update({'status': 'Accepted'})
+                                  .eq(
+                                    'application_id',
+                                    widget.application['application_id'],
+                                  );
+
+                              final studentEmail = await Supabase
+                                  .instance
+                                  .client
+                                  .from('users')
+                                  .select('email')
+                                  .eq('user_id', student['user_id'])
+                                  .single();
+                              final email = studentEmail['email'];
+
+                              print(email);
+
+                              final positionResponse = await Supabase
+                                  .instance
+                                  .client
+                                  .from('listing')
+                                  .select('position, company_id')
+                                  .eq(
+                                    'listing_id',
+                                    widget.application['listing_id'],
+                                  )
+                                  .single();
+                              final position = positionResponse['position'];
+                              final company = await Supabase.instance.client
+                                  .from('company')
+                                  .select('name, contact_email, contact_number')
+                                  .eq(
+                                    'company_id',
+                                    positionResponse['company_id'],
+                                  )
+                                  .single();
+
+                              final success = await EmailService.sendEmail(
+                                name: student['name'],
+                                email: email,
+                                title: position,
+                                companyName: company['name'],
+                                companyEmail: company['contact_email'],
+                                companyContact: company['contact_number'],
+                              );
+                              await widget.onRefresh();
+                              Navigator.pop(context);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(
+                                    'Accepted ${student['name']} and sent email.',
+                                  ),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            } on AuthException catch (e) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(e.message),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
+                          },
+                          style: TextButton.styleFrom(
+                            foregroundColor: widget.orange,
+                          ),
+                          child: Text('Accept'),
                         ),
                       ],
                     ),
-                    Text(
-                      '${getYearLevel(student['yr_level'])} ${student['course']} Student',
-                    ),
-                    SizedBox(height: isExpanded ? 10 : 0),
-                    if (isExpanded)
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          TextButton(
-                            onPressed: () async {
-                              try {
-                                final update = await Supabase.instance.client
-                                    .from('application')
-                                    .update({'status': 'Rejected'})
-                                    .eq(
-                                      'application_id',
-                                      widget.application['application_id'],
-                                    );
-                                await widget.onRefresh();
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Rejected ${student['name']}.',
-                                    ),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              } on AuthException catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(e.message),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            },
-                            style: TextButton.styleFrom(
-                              foregroundColor: Colors.red,
-                            ),
-                            child: Text('Reject'),
-                          ),
-                          TextButton(
-                            onPressed: () async {
-                              try {
-                                showDialog(
-                                  context: context,
-                                  barrierDismissible: false,
-                                  builder: (_) => Center(
-                                    child: CircularProgressIndicator(
-                                      color: widget.orange,
-                                    ),
-                                  ),
-                                );
-                                final update = await Supabase.instance.client
-                                    .from('application')
-                                    .update({'status': 'Accepted'})
-                                    .eq(
-                                      'application_id',
-                                      widget.application['application_id'],
-                                    );
-
-                                final studentEmail = await Supabase
-                                    .instance
-                                    .client
-                                    .from('users')
-                                    .select('email')
-                                    .eq('user_id', student['user_id'])
-                                    .single();
-                                final email = studentEmail['email'];
-
-                                print(email);
-
-                                final positionResponse = await Supabase
-                                    .instance
-                                    .client
-                                    .from('listing')
-                                    .select('position, company_id')
-                                    .eq(
-                                      'listing_id',
-                                      widget.application['listing_id'],
-                                    )
-                                    .single();
-                                final position = positionResponse['position'];
-                                final company = await Supabase.instance.client
-                                    .from('company')
-                                    .select(
-                                      'name, contact_email, contact_number',
-                                    )
-                                    .eq(
-                                      'company_id',
-                                      positionResponse['company_id'],
-                                    )
-                                    .single();
-
-                                final success = await EmailService.sendEmail(
-                                  name: student['name'],
-                                  email: email,
-                                  title: position,
-                                  companyName: company['name'],
-                                  companyEmail: company['contact_email'],
-                                  companyContact: company['contact_number'],
-                                );
-                                await widget.onRefresh();
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      'Accepted ${student['name']} and sent email.',
-                                    ),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              } on AuthException catch (e) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(e.message),
-                                    duration: Duration(seconds: 2),
-                                  ),
-                                );
-                              }
-                            },
-                            style: TextButton.styleFrom(
-                              foregroundColor: widget.orange,
-                            ),
-                            child: Text('Accept'),
-                          ),
-                        ],
-                      ),
-                  ],
-                ),
-                if (!isExpanded)
-                  Positioned(
-                    bottom: 0,
-                    left: 0,
-                    right: 0,
-                    child: Center(
-                      child: Container(
-                        color: Colors.transparent,
-                        child: const Text(
-                          '...',
-                          style: TextStyle(
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.black54,
-                          ),
+                ],
+              ),
+              if (!isExpanded && !widget.isAdmin)
+                Positioned(
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      color: Colors.transparent,
+                      child: const Text(
+                        '...',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black54,
                         ),
                       ),
                     ),
                   ),
-              ],
-            ),
+                ),
+            ],
           ),
         ),
-      );
-    }
-    return Container();
+      ),
+    );
   }
 }

@@ -323,7 +323,7 @@ Widget editListing(
                   controller: linkController,
                   cursorColor: Colors.black,
                   decoration: InputDecoration(
-                    labelText: 'LinkedIn Link *',
+                    labelText: 'LinkedIn Link',
                     floatingLabelStyle: TextStyle(color: Colors.black),
                     suffixIcon: IconButton(
                         style: IconButton.styleFrom(
@@ -403,15 +403,6 @@ Widget editListing(
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text("Please pick a duration type."),
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                      return;
-                    }
-                    if (link.isEmpty) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text("LinkedIn link can't be empty."),
                           duration: Duration(seconds: 2),
                         ),
                       );

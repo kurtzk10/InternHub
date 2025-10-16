@@ -4,6 +4,7 @@ import 'package:internhub/internetHelper.dart';
 import 'package:internhub/screens/login.dart';
 import 'package:internhub/screens/adminOperations/manageUser.dart';
 import 'package:internhub/screens/adminOperations/manageCompany.dart';
+import 'package:internhub/screens/adminOperations/viewLogs.dart';
 
 class AdminPage extends StatefulWidget {
   final bool isFirstTime;
@@ -679,7 +680,6 @@ Widget _homePage(
             child: InkWell(
               borderRadius: BorderRadius.circular(12),
               onTap: () {
-                print('Manage Companies clicked!');
                 Navigator.push(
                   context,
                   PageRouteBuilder(
@@ -687,6 +687,7 @@ Widget _homePage(
                     transitionDuration: Duration.zero,
                   ),
                 );
+                print('Manage Companies clicked!');
               },
               child: Container(
                 width: double.infinity,
@@ -709,6 +710,13 @@ Widget _homePage(
               borderRadius: BorderRadius.circular(12),
               onTap: () {
                 print('View Logs clicked!');
+                Navigator.push(
+                  context,
+                  PageRouteBuilder(
+                    pageBuilder: (_, __, ___) => ViewLogsPage(),
+                    transitionDuration: Duration.zero,
+                  ),
+                );
               },
               child: Container(
                 width: double.infinity,

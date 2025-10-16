@@ -493,11 +493,13 @@ Widget _loginCard(
                     ),
                   ),
                   SizedBox(height: 10),
-                  Row(
+                  loginFocus ? Row(
                     children: [
                       Text('Forgot password? '),
                       GestureDetector(
                         onTap: () {
+                          emailController.text = '';
+                          passwordController.text = '';
                           Navigator.push(
                             context,
                             PageRouteBuilder(
@@ -513,7 +515,7 @@ Widget _loginCard(
                         ),
                       ),
                     ],
-                  ),
+                  ) : SizedBox.shrink(),
                 ],
               ),
               Container(

@@ -979,12 +979,7 @@ class _ListingCardState extends State<ListingCard> {
                           onTap: widget.listing['link'].isNotEmpty
                               ? () {
                                   String link = widget.listing['link'];
-                                  if (!link.startsWith('http://') &&
-                                      !link.startsWith('https://')) {
-                                    link = 'https://$link';
-                                  }
-                                  if (link != null && link.isNotEmpty)
-                                    openLink(link);
+                                  openLink(link);
                                 }
                               : null,
                           child: Text(
