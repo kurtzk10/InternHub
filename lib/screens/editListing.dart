@@ -247,6 +247,7 @@ Widget editListing(
                   decoration: InputDecoration(
                     labelText: 'Listing Description',
                     floatingLabelStyle: TextStyle(color: Colors.black),
+                    alignLabelWithHint: true,
                     border: _inputBorder(),
                     enabledBorder: _inputBorder(),
                     focusedBorder: _inputBorder(),
@@ -326,11 +327,14 @@ Widget editListing(
                     labelText: 'LinkedIn Link *',
                     floatingLabelStyle: TextStyle(color: Colors.black),
                     suffixIcon: IconButton(
-                      onPressed: () {
-                        linkController.text = '';
-                      },
-                      icon: Icon(Icons.close, size: 20),
-                    ),
+                        style: IconButton.styleFrom(
+                          overlayColor: Colors.transparent,
+                        ),
+                        onPressed: () {
+                          linkController.text = '';
+                        },
+                        icon: Icon(Icons.close),
+                      ),
                     border: _inputBorder(),
                     enabledBorder: _inputBorder(),
                     focusedBorder: _inputBorder(),

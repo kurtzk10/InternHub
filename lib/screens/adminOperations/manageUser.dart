@@ -37,11 +37,15 @@ class _ManageUserPageState extends State<ManageUserPage> {
       var query = supabase
           .from('students')
           .select('*, users:users(auth_id, email)');
-      if (queryText.isNotEmpty) query = query.ilike('name', '%$queryText%');
-      if (selectedCourse != null && selectedCourse!.isNotEmpty)
+      if (queryText.isNotEmpty) {
+        query = query.ilike('name', '%$queryText%');
+      }
+      if (selectedCourse != null && selectedCourse!.isNotEmpty) {
         query = query.eq('course', selectedCourse ?? '');
-      if (selectedYear != null && selectedYear!.isNotEmpty)
+      }
+      if (selectedYear != null && selectedYear!.isNotEmpty) {
         query = query.eq('yr_level', selectedYear ?? '');
+      }
       final response = await query;
       setState(() {
         _results = response as List<dynamic>;
@@ -66,6 +70,10 @@ class _ManageUserPageState extends State<ManageUserPage> {
         _results[index]['yr_level'] = year;
       });
     }
+  }
+
+  Future<void> getStudents() async {
+    _onSearchChanged();
   }
 
   Future<void> deleteStudent(Map<String, dynamic> student) async {
@@ -112,6 +120,7 @@ class _ManageUserPageState extends State<ManageUserPage> {
 
   @override
   Widget build(BuildContext context) {
+    Future<void> Function() refresh = getStudents;
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     final orange = Color(0xffF5761A);
@@ -144,8 +153,19 @@ class _ManageUserPageState extends State<ManageUserPage> {
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
-                      hintText: 'Search student name',
+                      hintText: 'Search student name...',
                       hintStyle: TextStyle(color: Colors.grey),
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              style: IconButton.styleFrom(
+                                overlayColor: Colors.transparent,
+                              ),
+                              onPressed: () {
+                                _searchController.text = '';
+                              },
+                              icon: Icon(Icons.close),
+                            )
+                          : null,
                       border: _inputBorder(),
                       enabledBorder: _inputBorder(),
                       focusedBorder: _inputBorder(),
@@ -160,108 +180,114 @@ class _ManageUserPageState extends State<ManageUserPage> {
             ),
           ),
         ),
-        body: SingleChildScrollView(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                spacing: 10,
-                children: [
-                  Expanded(
-                    child: Center(
-                      child: DropdownMenu<String>(
-                        initialSelection: 'All Courses',
-                        dropdownMenuEntries: [
-                          DropdownMenuEntry(value: 'NetAd', label: 'NetAd'),
-                          DropdownMenuEntry(value: 'WebDev', label: 'WebDev'),
-                          DropdownMenuEntry(value: 'EMC', label: 'EMC'),
-                          DropdownMenuEntry(value: 'ComSci', label: 'ComSci'),
-                          DropdownMenuEntry(
-                            value: 'Cybersecurity',
-                            label: 'Cybersecurity',
-                          ),
-                          DropdownMenuEntry(
-                            value: 'All Courses',
-                            label: 'All Courses',
-                          ),
-                        ],
-                        onSelected: (value) {
-                          setState(() {
-                            selectedCourse = value == 'All Courses'
-                                ? ''
-                                : value;
-                            _onSearchChanged();
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Center(
-                      child: DropdownMenu<String>(
-                        initialSelection: 'All Years',
-                        dropdownMenuEntries: [
-                          DropdownMenuEntry(value: '1', label: '1st Year'),
-                          DropdownMenuEntry(value: '2', label: '2nd Year'),
-                          DropdownMenuEntry(value: '3', label: '3rd Year'),
-                          DropdownMenuEntry(value: '4', label: '4th Year'),
-                          DropdownMenuEntry(
-                            value: 'All Years',
-                            label: 'All Years',
-                          ),
-                        ],
-                        onSelected: (value) {
-                          setState(() {
-                            selectedYear = value == 'All Years' ? '' : value;
-                            _onSearchChanged();
-                          });
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-              SizedBox(height: 10),
-              _loading
-                  ? SizedBox(
-                      height: screenHeight * 0.7 - kToolbarHeight,
+        body: RefreshIndicator(
+          backgroundColor: Colors.white,
+          color: orange,
+          onRefresh: refresh,
+          child: SingleChildScrollView(
+            physics: AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  spacing: 10,
+                  children: [
+                    Expanded(
                       child: Center(
-                        child: CircularProgressIndicator(color: orange),
-                      ),
-                    )
-                  : _results.isEmpty
-                  ? SizedBox(
-                      height: screenHeight * 0.7 - kToolbarHeight,
-                      child: Center(
-                        child: Text(
-                          'No results found',
-                          style: TextStyle(fontSize: 20),
+                        child: DropdownMenu<String>(
+                          initialSelection: 'All Courses',
+                          dropdownMenuEntries: [
+                            DropdownMenuEntry(value: 'NetAd', label: 'NetAd'),
+                            DropdownMenuEntry(value: 'WebDev', label: 'WebDev'),
+                            DropdownMenuEntry(value: 'EMC', label: 'EMC'),
+                            DropdownMenuEntry(value: 'ComSci', label: 'ComSci'),
+                            DropdownMenuEntry(
+                              value: 'Cybersecurity',
+                              label: 'Cybersecurity',
+                            ),
+                            DropdownMenuEntry(
+                              value: 'All Courses',
+                              label: 'All Courses',
+                            ),
+                          ],
+                          onSelected: (value) {
+                            setState(() {
+                              selectedCourse = value == 'All Courses'
+                                  ? ''
+                                  : value;
+                              _onSearchChanged();
+                            });
+                          },
                         ),
                       ),
-                    )
-                  : Column(
-                      children: _results
-                          .where(
-                            (student) =>
-                                !student.values.any((value) => value == null),
-                          )
-                          .map((student) {
-                            return Padding(
-                              padding: EdgeInsets.symmetric(vertical: 6),
-                              child: StudentCard(
-                                student: student,
-                                orange: orange,
-                                isWide: isWide,
-                                onDone: updateStudentInList,
-                                onDelete: deleteStudent,
-                              ),
-                            );
-                          })
-                          .toList(),
                     ),
-            ],
+                    Expanded(
+                      child: Center(
+                        child: DropdownMenu<String>(
+                          initialSelection: 'All Years',
+                          dropdownMenuEntries: [
+                            DropdownMenuEntry(value: '1', label: '1st Year'),
+                            DropdownMenuEntry(value: '2', label: '2nd Year'),
+                            DropdownMenuEntry(value: '3', label: '3rd Year'),
+                            DropdownMenuEntry(value: '4', label: '4th Year'),
+                            DropdownMenuEntry(
+                              value: 'All Years',
+                              label: 'All Years',
+                            ),
+                          ],
+                          onSelected: (value) {
+                            setState(() {
+                              selectedYear = value == 'All Years' ? '' : value;
+                              _onSearchChanged();
+                            });
+                          },
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                SizedBox(height: 10),
+                _loading
+                    ? SizedBox(
+                        height: screenHeight * 0.7 - kToolbarHeight,
+                        child: Center(
+                          child: CircularProgressIndicator(color: orange),
+                        ),
+                      )
+                    : _results.isEmpty
+                    ? SizedBox(
+                        height: screenHeight * 0.7 - kToolbarHeight,
+                        child: Center(
+                          child: Text(
+                            'No results found',
+                            style: TextStyle(fontSize: 20),
+                          ),
+                        ),
+                      )
+                    : Column(
+                        children: _results
+                            .where(
+                              (student) =>
+                                  !student.values.any((value) => value == null),
+                            )
+                            .map((student) {
+                              return Padding(
+                                padding: EdgeInsets.symmetric(vertical: 6),
+                                child: StudentCard(
+                                  student: student,
+                                  orange: orange,
+                                  isWide: isWide,
+                                  onDone: updateStudentInList,
+                                  onDelete: deleteStudent,
+                                ),
+                              );
+                            })
+                            .toList(),
+                      ),
+              ],
+            ),
           ),
         ),
       ),
@@ -392,6 +418,10 @@ class _StudentCardState extends State<StudentCard> {
                 children: [
                   !isEditing
                       ? ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            foregroundColor: widget.orange,
+                            backgroundColor: Colors.white,
+                          ),
                           onPressed: () => setState(() => isEditing = true),
                           child: Text('Edit'),
                         )
@@ -411,7 +441,57 @@ class _StudentCardState extends State<StudentCard> {
                             backgroundColor: Colors.red,
                             foregroundColor: Colors.white,
                           ),
-                          onPressed: () => widget.onDelete(widget.student),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  backgroundColor: Colors.white,
+                                  title: Text(
+                                    'Confirm',
+                                    style: TextStyle(color: widget.orange),
+                                  ),
+                                  content: const Text(
+                                    'Are you sure you want to delete this student?',
+                                  ),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      child: Text(
+                                        'Cancel',
+                                        style: TextStyle(color: widget.orange),
+                                      ),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                    ),
+                                    TextButton(
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: widget.orange,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      child: Text('Confirm'),
+                                      onPressed: () async {
+                                        try {
+                                          widget.onDelete(widget.student);
+                                          Navigator.pop(context);
+                                        } on AuthException catch (e) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(e.message),
+                                              duration: Duration(seconds: 2),
+                                            ),
+                                          );
+                                          return;
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
                           child: Text('Delete'),
                         )
                       : ElevatedButton(

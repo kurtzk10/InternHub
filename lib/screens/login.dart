@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:internhub/screens/companyPage.dart';
 import 'package:internhub/screens/firstTimeCompany.dart';
 import 'package:internhub/screens/firstTimeStudent.dart';
 import 'package:internhub/screens/studentPage.dart';
-import 'package:internhub/screens/adminPage.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:internhub/internetHelper.dart';
 
@@ -22,7 +20,6 @@ class _LoginPageState extends State<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   bool loginFocus = true;
   int userType = 0;
-  bool isVisible = false;
 
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
@@ -93,7 +90,7 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  Future<Map<String, dynamic>?> getProfile(String role) async {
+  Future<Map<String, dynamic>?> getStudentProfile() async {
     final user = Supabase.instance.client.auth.currentUser;
     if (user == null) {
       return null;
@@ -105,18 +102,11 @@ class _LoginPageState extends State<LoginPage> {
         .eq('auth_id', user.id)
         .maybeSingle();
 
-    Map<String, dynamic>? response = await Supabase.instance.client
-        .from(role)
-        .select()
+    final response = await Supabase.instance.client
+        .from('students')
+        .select('name')
         .eq('user_id', usersResponse!['user_id'])
-        .single();
-
-    for (final entry in response.entries) {
-      final value = entry.value;
-      if (value == null || value.toString().isEmpty) {
-        return null;
-      }
-    }
+        .maybeSingle();
 
     return response;
   }
@@ -154,16 +144,8 @@ class _LoginPageState extends State<LoginPage> {
                     style: TextButton.styleFrom(
                       overlayColor: WidgetStateColor.transparent,
                       foregroundColor: Colors.black,
-                      disabledForegroundColor: Colors.black,
                     ),
-                    onPressed: loginFocus
-                        ? null
-                        : () => setState(() {
-                            loginFocus = true;
-                            isVisible = false;
-                            emailController.text = '';
-                            passwordController.text = '';
-                          }),
+                    onPressed: () => setState(() => loginFocus = true),
                     child: Text(
                       'LOGIN',
                       style: TextStyle(
@@ -178,16 +160,8 @@ class _LoginPageState extends State<LoginPage> {
                     style: TextButton.styleFrom(
                       overlayColor: WidgetStateColor.transparent,
                       foregroundColor: Colors.black,
-                      disabledForegroundColor: Colors.black,
                     ),
-                    onPressed: loginFocus
-                        ? () => setState(() {
-                            loginFocus = false;
-                            isVisible = false;
-                            emailController.text = '';
-                            passwordController.text = '';
-                          })
-                        : null,
+                    onPressed: () => setState(() => loginFocus = false),
                     child: Text(
                       'SIGN UP',
                       style: TextStyle(
@@ -234,15 +208,11 @@ class _LoginPageState extends State<LoginPage> {
                     loginFocus,
                     emailController,
                     passwordController,
-                    isVisible,
                     isWide,
                     _login,
                     _signUp,
                     setState,
-                    getProfile,
-                    () => setState(() {
-                      isVisible = !isVisible;
-                    }),
+                    getStudentProfile,
                   ),
                 ],
               ),
@@ -382,13 +352,11 @@ Widget _loginCard(
   bool loginFocus,
   emailController,
   passwordController,
-  bool isVisible,
   bool isWide,
   Future<LoginResult> Function(String, String) onLogin,
   Future<String> Function(String, String, int) onSignUp,
   void Function(void Function()) setParentState,
-  Future<Map<String, dynamic>?> Function(String) getProfile,
-  VoidCallback passwordChange,
+  Future<Map<String, dynamic>?> Function() getStudentProfile,
 ) {
   return Container(
     child: Column(
@@ -459,7 +427,7 @@ Widget _loginCard(
                 child: TextFormField(
                   controller: passwordController,
                   cursorColor: Colors.black,
-                  obscureText: !isVisible,
+                  obscureText: true,
                   decoration: InputDecoration(
                     filled: true,
                     fillColor: Colors.white,
@@ -467,14 +435,6 @@ Widget _loginCard(
                     hint: Text(
                       'Password',
                       style: TextStyle(color: Colors.grey),
-                    ),
-                    suffixIcon: IconButton(
-                      splashColor: Colors.transparent,
-                      highlightColor: Colors.transparent,
-                      onPressed: passwordChange,
-                      icon: isVisible
-                          ? Icon(Icons.visibility_off)
-                          : Icon(Icons.visibility),
                     ),
                     border: _inputBorder(),
                     enabledBorder: _inputBorder(),
@@ -506,9 +466,6 @@ Widget _loginCard(
                 width: double.infinity,
                 child: TextButton(
                   onPressed: () async {
-                    FocusScope.of(context).unfocus();
-                    isVisible = false;
-
                     final email = emailController.text.trim().toLowerCase();
                     final password = passwordController.text.trim();
 
@@ -529,9 +486,6 @@ Widget _loginCard(
                       );
                       return;
                     }
-
-                    emailController.text = '';
-                    passwordController.text = '';
 
                     if (loginFocus) {
                       showDialog(
@@ -563,7 +517,7 @@ Widget _loginCard(
                           .eq('email', email)
                           .single();
                       if (type['role'] == 'students') {
-                        final profile = await getProfile('students');
+                        final profile = await getStudentProfile();
 
                         if (profile == null) {
                           Navigator.pushReplacement(
@@ -584,7 +538,13 @@ Widget _loginCard(
                           );
                         }
                       } else if (type['role'] == 'company') {
-                        final profile = await getProfile('company');
+                        final type = await Supabase.instance.client
+                            .from('users')
+                            .select('role')
+                            .eq('email', email)
+                            .single();
+                        final profile = await getStudentProfile();
+
                         if (profile == null) {
                           Navigator.pushReplacement(
                             context,
@@ -598,46 +558,14 @@ Widget _loginCard(
                           Navigator.pushReplacement(
                             context,
                             PageRouteBuilder(
-                              pageBuilder: (_, __, ___) => CompanyPage(),
+                              pageBuilder: (_, __, ___) => StudentPage(),
                               transitionDuration: Duration.zero,
                             ),
                           );
                         }
-                      } else {
-                        final profile = await getProfile('admin');
-
-                        if (profile == null) {
-                          Navigator.pushReplacement(
-                            context,
-                            PageRouteBuilder(
-                              pageBuilder: (_, __, ___) =>
-                                  AdminPage(isFirstTime: true),
-                              transitionDuration: Duration.zero,
-                            ),
-                          );
-                        } else {
-                          Navigator.pushReplacement(
-                            context,
-                            PageRouteBuilder(
-                              pageBuilder: (_, __, ___) =>
-                                  AdminPage(isFirstTime: false),
-                              transitionDuration: Duration.zero,
-                            ),
-                          );
-                        }
-                      }
+                      } else {}
                     } else {
-                      showDialog(
-                        context: context,
-                        barrierDismissible: false,
-                        builder: (_) => Center(
-                          child: CircularProgressIndicator(color: orange),
-                        ),
-                      );
-
                       final result = await onSignUp(email, password, userType);
-
-                      Navigator.of(context).pop();
 
                       setParentState(() {
                         ScaffoldMessenger.of(context).showSnackBar(

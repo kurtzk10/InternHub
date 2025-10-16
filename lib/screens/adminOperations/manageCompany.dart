@@ -31,12 +31,12 @@ class _ManageCompanyPageState extends State<ManageCompanyPage> {
     Map<String, dynamic> company,
     String name,
     String industry,
-    bool isVerified, 
+    bool isVerified,
   ) {
     final index = _results.indexWhere(
       (e) => e['company_id'] == company['company_id'],
     );
-    if (index != 1) {
+    if (index != -1) {
       setState(() {
         _results[index]['name'] = name;
         _results[index]['industry'] = industry;
@@ -47,7 +47,7 @@ class _ManageCompanyPageState extends State<ManageCompanyPage> {
 
   Future<void> deleteCompany(Map<String, dynamic> company) async {
     final url = Uri.parse(
-      'https://mgmvynmmdqbnzlandlmr.supabase.co/functions/v1/delete_student',
+      'https://mgmvynmmdqbnzlandlmr.supabase.co/functions/v1/delete_company',
     );
     final authId = company['users']['auth_id'];
     final companyId = company['company_id'];
@@ -57,7 +57,7 @@ class _ManageCompanyPageState extends State<ManageCompanyPage> {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1nbXZ5bm1tZHFibnpsYW5kbG1yIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1OTc3MDM1MSwiZXhwIjoyMDc1MzQ2MzUxfQ.-AXDwz7s1PApG5zlComqe6QnDBNvu2TEbwqN_Ez-e9U';
     final response = await http.post(
       url,
-      body: jsonEncode({'student_id': companyId, 'auth_id': authId}),
+      body: jsonEncode({'company_id': companyId, 'auth_id': authId}),
       headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $serviceRoleKey',
@@ -87,6 +87,10 @@ class _ManageCompanyPageState extends State<ManageCompanyPage> {
     }
   }
 
+  Future<void> getCompanies() async {
+    _onSearchChanged();
+  }
+
   void _onSearchChanged() {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     _debounce = Timer(const Duration(milliseconds: 300), () async {
@@ -105,6 +109,7 @@ class _ManageCompanyPageState extends State<ManageCompanyPage> {
   }
 
   Widget build(BuildContext context) {
+    Future<void> Function() refresh = getCompanies;
     final screenHeight = MediaQuery.of(context).size.height;
     final screenWidth = MediaQuery.of(context).size.width;
     final orange = Color(0xffF5761A);
@@ -137,7 +142,18 @@ class _ManageCompanyPageState extends State<ManageCompanyPage> {
                     decoration: InputDecoration(
                       filled: true,
                       fillColor: Colors.white,
-                      hintText: 'Search company name',
+                      hintText: 'Search company name...',
+                      suffixIcon: _searchController.text.isNotEmpty
+                          ? IconButton(
+                              style: IconButton.styleFrom(
+                                overlayColor: Colors.transparent,
+                              ),
+                              onPressed: () {
+                                _searchController.text = '';
+                              },
+                              icon: Icon(Icons.close),
+                            )
+                          : null,
                       hintStyle: TextStyle(color: Colors.grey),
                       border: _inputBorder(),
                       enabledBorder: _inputBorder(),
@@ -153,50 +169,56 @@ class _ManageCompanyPageState extends State<ManageCompanyPage> {
             ),
           ),
         ),
-        body: SingleChildScrollView(
-          padding: EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              _loading
-                  ? SizedBox(
-                      height: screenHeight - kToolbarHeight,
-                      child: Center(
-                        child: CircularProgressIndicator(color: orange),
-                      ),
-                    )
-                  : _results.isEmpty
-                  ? SizedBox(
-                      height: screenHeight - kToolbarHeight,
-                      child: Center(
-                        child: Text(
-                          'No results found',
-                          style: TextStyle(fontSize: 20),
+        body: RefreshIndicator(
+          backgroundColor: Colors.white,
+          color: orange,
+          onRefresh: refresh,
+          child: SingleChildScrollView(
+            physics: AlwaysScrollableScrollPhysics(),
+            padding: EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _loading
+                    ? SizedBox(
+                        height: screenHeight - kToolbarHeight,
+                        child: Center(
+                          child: CircularProgressIndicator(color: orange),
                         ),
+                      )
+                    : _results.isEmpty
+                    ? SizedBox(
+                        height: screenHeight - kToolbarHeight,
+                        child: Center(
+                          child: Text(
+                            'No results found',
+                            style: TextStyle(fontSize: 20),
+                          ),
+                        ),
+                      )
+                    : Column(
+                        children: _results
+                            .where(
+                              (company) =>
+                                  !company.values.any((value) => value == null),
+                            )
+                            .map((company) {
+                              return Padding(
+                                padding: EdgeInsets.symmetric(vertical: 6),
+                                child: CompanyCard(
+                                  key: ValueKey(company['company_id']),
+                                  company: company,
+                                  orange: orange,
+                                  isWide: isWide,
+                                  onDone: updateCompanyInList,
+                                  onDelete: deleteCompany,
+                                ),
+                              );
+                            })
+                            .toList(),
                       ),
-                    )
-                  : Column(
-                      children: _results
-                          .where(
-                            (company) =>
-                                !company.values.any((value) => value == null),
-                          )
-                          .map((company) {
-                            return Padding(
-                              padding: EdgeInsets.symmetric(vertical: 6),
-                              child: CompanyCard(
-                                company: company,
-                                orange: orange,
-                                isWide: isWide,
-
-                                onDone: updateCompanyInList,
-                                onDelete: deleteCompany,
-                              ),
-                            );
-                          })
-                          .toList(),
-                    ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
@@ -370,7 +392,57 @@ class _CompanyCardPageState extends State<CompanyCard> {
                             backgroundColor: Colors.red,
                             foregroundColor: Colors.white,
                           ),
-                          onPressed: () => widget.onDelete(widget.company),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  backgroundColor: Colors.white,
+                                  title: Text(
+                                    'Confirm',
+                                    style: TextStyle(color: widget.orange),
+                                  ),
+                                  content: const Text(
+                                    'Are you sure you want to delete this company?',
+                                  ),
+                                  actions: <Widget>[
+                                    TextButton(
+                                      child: Text(
+                                        'Cancel',
+                                        style: TextStyle(color: widget.orange),
+                                      ),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                    ),
+                                    TextButton(
+                                      style: TextButton.styleFrom(
+                                        backgroundColor: widget.orange,
+                                        foregroundColor: Colors.white,
+                                      ),
+                                      child: Text('Confirm'),
+                                      onPressed: () async {
+                                        try {
+                                          widget.onDelete(widget.company);
+                                          Navigator.pop(context);
+                                        } on AuthException catch (e) {
+                                          ScaffoldMessenger.of(
+                                            context,
+                                          ).showSnackBar(
+                                            SnackBar(
+                                              content: Text(e.message),
+                                              duration: Duration(seconds: 2),
+                                            ),
+                                          );
+                                          return;
+                                        }
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
                           child: Text('Delete'),
                         )
                       : ElevatedButton(

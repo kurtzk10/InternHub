@@ -1085,25 +1085,52 @@ Widget _settingsPage(
           borderRadius: BorderRadius.circular(12),
           child: InkWell(
             borderRadius: BorderRadius.circular(12),
-            onTap: () async {
-              try {
-                await Supabase.instance.client.auth.signOut();
+            onTap: () {
+              showDialog(
+                context: context,
+                builder: (BuildContext context) {
+                  return AlertDialog(
+                    backgroundColor: Colors.white,
+                    title: Text('Confirm', style: TextStyle(color: orange)),
+                    content: const Text('Are you sure you want to log out?'),
+                    actions: <Widget>[
+                      TextButton(
+                        child: Text('Cancel', style: TextStyle(color: orange)),
+                        onPressed: () {
+                          Navigator.of(context).pop();
+                        },
+                      ),
+                      TextButton(
+                        style: TextButton.styleFrom(
+                          backgroundColor: orange,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: Text('Confirm'),
+                        onPressed: () async {
+                          try {
+                            await Supabase.instance.client.auth.signOut();
 
-                Navigator.of(context).pushAndRemoveUntil(
-                  PageRouteBuilder(
-                    pageBuilder: (_, __, ___) => LoginPage(),
-                    transitionDuration: Duration.zero,
-                  ),
-                  (route) => false,
-                );
-              } catch (e) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Failed to log out: $e'),
-                    duration: Duration(seconds: 2),
-                  ),
-                );
-              }
+                            Navigator.of(context).pushAndRemoveUntil(
+                              PageRouteBuilder(
+                                pageBuilder: (_, __, ___) => LoginPage(),
+                                transitionDuration: Duration.zero,
+                              ),
+                              (route) => false,
+                            );
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Failed to log out: $e'),
+                                duration: Duration(seconds: 2),
+                              ),
+                            );
+                          }
+                        },
+                      ),
+                    ],
+                  );
+                },
+              );
             },
             child: Padding(
               padding: const EdgeInsets.all(16.0),
@@ -1114,7 +1141,7 @@ Widget _settingsPage(
                     fontFamily: 'Inter',
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black,
+                    color: Colors.white,
                   ),
                 ),
               ),
