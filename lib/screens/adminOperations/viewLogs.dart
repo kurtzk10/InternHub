@@ -2,9 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:internhub/screens/viewApplicants.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:internhub/internetHelper.dart';
-import 'package:internhub/screens/login.dart';
 import 'package:internhub/screens/editListing.dart';
-import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ViewLogsPage extends StatefulWidget {

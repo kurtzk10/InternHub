@@ -91,7 +91,7 @@ class _FirstTimeStudentPageState extends State<FirstTimeStudentPage> {
                             context,
                             PageRouteBuilder(
                               pageBuilder: (_, __, ___) => StudentPage(),
-                              transitionDuration: Duration.zero
+                              transitionDuration: Duration.zero,
                             ),
                           );
                         }
@@ -795,6 +795,24 @@ Widget _uniForm(
                             final yr = yearController.text;
                             final course = courseController.text;
 
+                            if (yr.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Year level can't be empty."),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
+
+                            if (course.isEmpty) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text("Course field can't be empty."),
+                                  duration: Duration(seconds: 2),
+                                ),
+                              );
+                            }
+
                             int year = yr == '1st Year'
                                 ? 1
                                 : yr == '2nd Year'
@@ -1128,7 +1146,9 @@ Widget _resumeForm(
                         height: screenHeight / 10,
                         child: TextButton(
                           onPressed: () async {
-                            final resume = urlController.text.trim().toLowerCase();
+                            final resume = urlController.text
+                                .trim()
+                                .toLowerCase();
 
                             if (resume.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
@@ -1280,7 +1300,9 @@ Widget _resumeForm(
                         height: screenHeight / 17.5,
                         child: TextButton(
                           onPressed: () async {
-                            final resume = urlController.text.trim().toLowerCase();
+                            final resume = urlController.text
+                                .trim()
+                                .toLowerCase();
 
                             if (resume.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
